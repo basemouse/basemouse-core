@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Governance Demo — BaseMouse</title>
+    <meta
+      name="description"
+      content="A BaseMouse demo flow for AI agent governance: synthetic corpus, golden-query evals, and context-pack evidence for audit-ready agents."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b09" />
+    <meta property="og:title" content="BaseMouse Agent Governance Demo" />
+    <meta property="og:description" content="35 realistic docs, 20 golden queries, context-pack evidence, and lexical vs hybrid retrieval baselines." />
+    <meta property="og:image" content="https://basemouse.com/og.png" />
+    <meta property="og:url" content="https://basemouse.com/agent-governance-demo.html" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BaseMouse home">
+          <svg class="logo-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false">
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="#121310" />
+            <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+            <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+            <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+            <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+          </svg>
+          <span>BASE<b>MOUSE</b></span>
+        </a>
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="/">home</a>
+          <a href="/#terminal">live demo</a>
+          <a href="/#api">api</a>
+          <a href="https://github.com/basemouse/basemouse/blob/main/docs/demo-corpus-agent-governance.md">docs</a>
+        </nav>
+        <a class="btn primary topbar-cta" href="/#pricing">Get your key</a>
+      </header>
+
+      <main id="main">
+        <section class="hero demo-hero">
+          <div class="hero-copy">
+            <p class="spec-strip"><span>DEMO CORPUS</span><span>AGENT GOVERNANCE</span><span>REV: <b>0.1</b></span></p>
+            <h1>Agent Governance <span class="hl">Demo</span></h1>
+            <p class="sub">
+              A synthetic-but-realistic corpus for showing how BaseMouse grounds AI agents in
+              auditable context: <b>OpenTelemetry evidence span</b>, EU AI Act logging, policy controls,
+              cost investigations, and incident response.
+            </p>
+            <div class="cta-row">
+              <a class="btn primary" href="#queries">Use the demo queries</a>
+              <a class="btn ghost" href="https://github.com/basemouse/basemouse/blob/main/data/demo-corpus/agent-governance.json">View corpus JSON</a>
+            </div>
+          </div>
+
+          <figure class="code-card demo-summary" aria-label="Demo retrieval baseline">
+            <div class="code-head"><span>retrieval quality baseline</span><span>npm run eval:retrieval:demo</span></div>
+            <div class="demo-metrics">
+              <div><b>35</b><span>documents</span></div>
+              <div><b>20/20</b><span>golden queries</span></div>
+              <div><b>100%</b><span>hybrid recall</span></div>
+              <div><b>0.900</b><span>hybrid MRR</span></div>
+            </div>
+            <p class="hint demo-proof">20/20 golden queries pass with 100% search and context-pack recall.</p>
+            <pre class="code-block code-response"><code>PASS retrieval eval: 20/20 cases passed
+mode=hybrid minRecall=100%
+searchRecall=100% contextPackRecall=100%
+searchMRR=0.900 contextPackMRR=0.900</code></pre>
+          </figure>
+        </section>
+
+        <section class="caps" aria-label="Demo flow">
+          <div class="caps-head"><span>demo flow</span><span>what this proves</span></div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/01</span>
+            <h2>Corpus</h2>
+            <p>Thirty-five docs model agent registry, policy controls, evidence bundles, redaction, cost attribution, and MeshAI control-plane integration.</p>
+            <div class="stat"><b>35</b>docs</div>
+          </div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/02</span>
+            <h2>Golden queries</h2>
+            <p>Twenty realistic operator/auditor questions validate whether the expected grounding document appears in search and context packs.</p>
+            <div class="stat"><b>20</b>queries</div>
+          </div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/03</span>
+            <h2>Evidence</h2>
+            <p>Context packs preserve document ids, citations, versions, checksums, retrieval mode, and provenance without stuffing raw bodies into traces.</p>
+            <div class="stat"><b>OTLP</b>ready</div>
+          </div>
+        </section>
+
+        <section class="quickstart" id="queries" aria-label="Sample agent governance queries">
+          <div class="qs-intro">
+            <p class="spec-strip"><span>SAMPLE QUERIES</span><span>AGENT / AUDITOR LANGUAGE</span></p>
+            <h2>Ask governance questions, get grounded context.</h2>
+            <p class="sub">These are the public demo prompts that map to the golden-query suite.</p>
+            <ul class="qs-list">
+              <li>what fields should an OpenTelemetry evidence span include for context retrieval</li>
+              <li>how do we prove what context grounded an agent answer during audit</li>
+              <li>EU AI Act logging controls for high risk agents</li>
+              <li>investigate agent cost spike from retrieval volume model calls and tool fanout</li>
+            </ul>
+          </div>
+          <figure class="code-card">
+            <div class="code-head"><span>context-pack output shape</span><span>cited + checksummed</span></div>
+            <pre class="code-block"><code>node scripts/evaluate-retrieval.mjs \
+  --corpus data/demo-corpus/agent-governance.json \
+  --cases data/retrieval-eval/agent-governance-demo.json \
+  --retrieval hybrid</code></pre>
+            <pre class="code-block code-response"><code>{
+  "schema": "basemouse.context_pack.v1",
+  "retrieval": "hybrid",
+  "entries": [
+    {
+      "id": "otel-evidence-span",
+      "title": "OpenTelemetry Evidence Span",
+      "provenance": { "checksum": "…", "version": 1 }
+    }
+  ]
+}</code></pre>
+          </figure>
+        </section>
+
+        <section class="opencore" aria-label="Why this matters">
+          <p class="spec-strip"><span>WHY IT MATTERS</span><span>MEASURABLE BEFORE EMBEDDINGS</span></p>
+          <h2>Retrieval quality is now a product story, not a vibe.</h2>
+          <p class="sub">
+            The demo gives BaseMouse a repeatable proof loop before learned semantic embeddings or full GraphRAG:
+            corpus → golden query → expected source → measured recall/MRR → regression gate. Real partner corpora can
+            replace this synthetic set without changing the harness.
+          </p>
+          <div class="cta-row">
+            <a class="btn primary" href="https://github.com/basemouse/basemouse/blob/main/docs/demo-corpus-agent-governance.md">Read the demo docs</a>
+            <a class="btn ghost" href="mailto:devsupport@meshai.dev?subject=BaseMouse%20agent%20governance%20demo">Talk to MeshAI Labs</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
+        <span class="colophon-mid"><a href="/">home</a> · <a href="https://github.com/basemouse/basemouse">repo</a> · <a href="https://github.com/basemouse/basemouse/blob/main/docs/demo-corpus-agent-governance.md">demo docs</a></span>
+        <span>NO BLACK BOXES. NO SILENT EDITS.</span>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "basemouse",
+  "version": "0.2.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test",
+    "lint": "bash -c 'set -e; for f in src/*.js src/handlers/*.js public/*.js scripts/*.mjs; do node --check \"$f\"; done'",
+    "eval:retrieval": "node scripts/evaluate-retrieval.mjs --cases data/retrieval-eval/golden-seed.json --retrieval hybrid",
+    "eval:retrieval:demo": "node scripts/evaluate-retrieval.mjs --corpus data/demo-corpus/agent-governance.json --cases data/retrieval-eval/agent-governance-demo.json --retrieval hybrid",
+    "claude:loop": "node scripts/claude-improve-loop.mjs",
+    "test:pg": "node --test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "pg": "^8.21.0",
+    "stripe": "^22.2.0"
+  }
+}

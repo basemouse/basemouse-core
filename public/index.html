@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BaseMouse — sourced answers for your AI agents, from your own docs</title>
+    <meta name="description" content="Feed your AI agents answers from your own documents, with a source on every claim. One API call, full history, open source at the core." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b09" />
+    <meta property="og:title" content="BaseMouse — ground your agents in your docs" />
+    <meta property="og:description" content="Feed your AI agents answers from your own documents, with a source on every claim. One API call, full history, open source at the core." />
+    <meta property="og:image" content="https://basemouse.com/og.png" />
+    <meta property="og:url" content="https://basemouse.com" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BaseMouse home">
+          <svg class="logo-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false">
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="#121310" />
+            <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+            <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+            <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+            <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+          </svg>
+          <span>BASE<b>MOUSE</b></span>
+        </a>
+        <span class="live-status" id="live-status" data-state="loading" role="status" aria-live="polite">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-text">checking status…</span>
+        </span>
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="#terminal">demo</a>
+          <a href="/agent-governance-demo.html">governance demo</a>
+          <a href="/design-partner.html">design partner</a>
+          <a href="#api">api</a>
+          <a href="#pricing">pricing</a>
+          <a href="#open-core">open source</a>
+          <a href="https://github.com/basemouse/basemouse">docs</a>
+        </nav>
+        <a class="btn primary topbar-cta" href="#pricing">Get your key</a>
+      </header>
+
+      <main id="main">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="spec-strip" aria-label="Product metadata">
+              <span>UNIT: CONTEXT-INFRA</span><span>REV: <b>0.3</b></span><span>STORE: <b id="metric-docs-wrap">CONTEXT STORE</b></span>
+            </p>
+            <h1 aria-label="Your AI agents answer from your real docs, with a receipt for every claim.">YOUR AI AGENTS ANSWER FROM <span class="hl">YOUR</span> REAL DOCS, WITH A RECEIPT FOR EVERY CLAIM.</h1>
+            <p class="sub">
+              AI agents make things up. When they pull from your company's docs, you usually
+              can't tell where a fact came from or whether it's still accurate. <b>BaseMouse feeds
+              your agents answers straight from your own documents</b>, and <b>tags every answer
+              with its source</b> so you can always check it.
+            </p>
+            <div class="cta-row" aria-label="Calls to action">
+              <a class="btn primary" href="#pricing">Get your key</a>
+              <a class="btn ghost" href="#terminal">Run the demo</a>
+              <a class="btn ghost" href="/agent-governance-demo.html">Agent governance demo</a>
+              <a class="btn ghost" href="/design-partner.html">Design partner intake</a>
+            </div>
+          </div>
+
+          <div class="term" id="terminal" aria-label="Live BaseMouse demo terminal">
+            <div class="term-bar">
+              <i></i><i></i><i></i>
+              <span>live session — basemouse.com</span>
+            </div>
+            <div class="term-body" id="term-log" role="log" aria-live="polite" aria-label="Terminal output"></div>
+            <form class="term-prompt" id="term-form">
+              <label class="visually-hidden" for="term-input">Search the demo docs</label>
+              <span class="p" aria-hidden="true">$</span>
+              <input id="term-input" autocomplete="off" spellcheck="false" maxlength="256"
+                     placeholder="query the demo docs…" />
+              <button type="submit" class="term-run">run</button>
+            </form>
+            <div class="term-chips" aria-label="Example queries">
+              <button class="chip" data-query="agent context">agent context</button>
+              <button class="chip" data-query="DevOps runbook">DevOps runbook</button>
+              <button class="chip" data-query="memory capsules">memory capsules</button>
+              <button class="chip" data-query="provenance">provenance</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="caps" aria-label="Capabilities">
+          <div class="caps-head"><span>capability matrix</span><span id="caps-verified">verified in production</span></div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/01</span>
+            <h2 aria-label="Add your documents">ADD YOUR DOCUMENTS</h2>
+            <p>Point BaseMouse at a folder of your docs. It reads them, keeps every version, and labels them so they're easy to find. Re-import whenever you like, with no duplicates, and a clear report if any file doesn't go through.</p>
+            <div class="stat"><b data-count="30" data-suffix="s">30s</b>folder → searchable</div>
+          </div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/02</span>
+            <h2 aria-label="Your agent asks, and gets sourced answers">YOUR AGENT ASKS, AND GETS SOURCED ANSWERS</h2>
+            <p>Your agent makes one request and gets back the most relevant passages, each with its source, a fingerprint that proves it hasn't been tampered with, and how recently it was updated. Ready to drop straight into a prompt.</p>
+            <div class="stat"><b data-count="1">1</b>endpoint to integrate</div>
+          </div>
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/03</span>
+            <h2 aria-label="See exactly what your agent was told">SEE EXACTLY WHAT YOUR AGENT WAS TOLD</h2>
+            <p>Every change is recorded, and nothing is ever silently overwritten. Even deletions stay on the record. So you can always answer two questions: where did this answer come from, and what changed since?</p>
+            <div class="stat"><b data-count="100" data-suffix="%">100%</b>of edits preserved</div>
+          </div>
+        </section>
+
+        <section class="quickstart" id="api" aria-label="API quickstart">
+          <div class="qs-intro">
+            <p class="spec-strip"><span>API</span><span>NO SDK REQUIRED</span></p>
+            <h2 aria-label="One call from your agent.">ONE CALL FROM YOUR AGENT.</h2>
+            <p class="sub">The demo docs need no key. Your documents need one header.</p>
+            <p class="sub">For your engineers: it's a single HTTP call, no SDK to install. The endpoints below show exactly what comes back.</p>
+            <ul class="qs-list">
+              <li><code>GET /api/context-pack</code> — cited, checksummed pack</li>
+              <li><code>GET /api/search</code> — ranked matches with scores</li>
+              <li><code>POST /api/documents</code> — your docs in (Bearer bm_…)</li>
+              <li><code>GET /api/documents/:id/history</code> — the full record</li>
+            </ul>
+          </div>
+          <figure class="code-card">
+            <div class="code-head">
+              <span class="code-label">GET /api/context-pack</span>
+              <button id="copy-curl" class="code-copy" type="button">copy curl</button>
+            </div>
+            <pre class="code-block" aria-label="Example request"><code id="api-curl">curl -s "https://basemouse.com/api/context-pack?q=agent%20context&amp;limit=2"</code></pre>
+            <pre class="code-block code-response" aria-label="Example response"><code>{
+  "schema": "basemouse.context_pack.v1",
+  "entryCount": 2,
+  "citations": [ { "label": "[agent-context-engine] …" } ],
+  "entries": [ {
+    "title": "Agent Context Engine",
+    "relevance": { "score": 6, "matchedTerms": ["agent","context"] },
+    "provenance": { "checksum": "e765f4dce81039b4", "version": 3 }
+  } ]
+}</code></pre>
+          </figure>
+        </section>
+
+        <section class="pricing" id="pricing" aria-label="BaseMouse pricing">
+          <div class="rate-head">
+            <h2 aria-label="Rate card.">RATE CARD</h2>
+            <p class="sub">Pick a plan → pay → key issued instantly, shown once. Billed through Stripe. BaseMouse never sees your card.</p>
+          </div>
+          <div id="pricing-tiers" class="rate" aria-live="polite">
+            <p class="hint">loading plans…</p>
+          </div>
+          <p id="pricing-note" class="pricing-note" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="opencore" id="open-core" aria-label="Open core">
+          <p class="spec-strip"><span>OPEN CORE</span><span>MIT LICENSED</span></p>
+          <h2 aria-label="Run the core yourself.">RUN THE CORE YOURSELF.</h2>
+          <p class="sub">
+            BaseMouse is <b>open source at its heart</b>. The engine that imports your docs and
+            serves sourced answers is free and MIT-licensed. Run it on your own servers, with
+            nothing phoning home. The paid hosted version just handles the running, billing, and
+            support for you, so you don't have to. See the docs for exactly which features ship
+            today versus what's on the roadmap.
+          </p>
+          <div class="cta-row" aria-label="Open source links">
+            <a class="btn primary" href="https://github.com/basemouse/basemouse">View on GitHub</a>
+            <a class="btn ghost" href="https://github.com/basemouse/basemouse/blob/main/docs/open-source.md">Open-core docs</a>
+          </div>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
+        <span class="colophon-mid">roadmap: MCP endpoint · change webhooks · <a href="https://github.com/basemouse/basemouse">docs</a> · <a href="mailto:devsupport@basemouse.com?subject=BaseMouse">contact</a></span>
+        <span>NO BLACK BOXES. NO SILENT EDITS.</span>
+      </footer>
+    </div>
+    <script type="module" src="/app.js"></script>
+    <script type="module" src="/billing.js"></script>
+  </body>
+</html>

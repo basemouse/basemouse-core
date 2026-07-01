@@ -1,0 +1,35 @@
+{
+  "description": "Seed-corpus retrieval quality smoke suite. Add partner-corpus cases as real corpora arrive.",
+  "cases": [
+    {
+      "id": "agent-context-packs",
+      "query": "structured versioned context packs for AI agents",
+      "expected": ["agent-context-engine", "agent-prompt-templates"],
+      "limit": 5
+    },
+    {
+      "id": "hybrid-search-signals",
+      "query": "hybrid search vector graph provenance freshness signals",
+      "expected": ["hybrid-search", "graphrag-provenance"],
+      "limit": 5
+    },
+    {
+      "id": "meshai-audit-evidence",
+      "query": "OpenTelemetry audit evidence MeshAI governance context pack",
+      "expected": ["meshai-governance-example"],
+      "limit": 5
+    },
+    {
+      "id": "local-first-private-context",
+      "query": "local first privacy own repository exportable context packs",
+      "expected": ["local-first-privacy"],
+      "limit": 5
+    },
+    {
+      "id": "deployment-runbook",
+      "query": "deployment health checks rollback incident handoffs runbook",
+      "expected": ["devops-runbook"],
+      "limit": 5
+    }
+  ]
+}

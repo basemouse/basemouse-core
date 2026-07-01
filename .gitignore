@@ -1,0 +1,10 @@
+node_modules/
+.env
+.DS_Store
+coverage/
+*.log
+.basemouse/claude-loop/
+.gstack/
+
+# Local MCP configs
+.mcp.json

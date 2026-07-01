@@ -1,0 +1,54 @@
+services:
+  basemouse:
+    # Default to the published multi-arch image from GHCR so a fresh checkout can
+    # `docker compose pull && docker compose up -d` with no local toolchain.
+    # Override BASEMOUSE_IMAGE (e.g. =basemouse-local:latest) or pass `--build`
+    # to build from this repo instead — the build stanza below stays available
+    # for local development. See docs/self-hosted.md.
+    image: ${BASEMOUSE_IMAGE:-ghcr.io/basemouse/basemouse:latest}
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+    ports:
+      - "${BASEMOUSE_PORT:-3000}:3000"
+    volumes:
+      - basemouse-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/readyz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["llm"]
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama:/root/.ollama
+
+  slack-bot:
+    profiles: ["slack"]
+    build:
+      context: ../../integrations/slack
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      BASEMOUSE_URL: http://basemouse:3000
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://ollama:11434/v1}
+    depends_on:
+      basemouse:
+        condition: service_healthy
+    volumes:
+      - slack-state:/app/.data
+
+volumes:
+  basemouse-data:
+  ollama:
+  slack-state:

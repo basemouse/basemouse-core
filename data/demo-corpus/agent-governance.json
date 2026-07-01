@@ -1,0 +1,678 @@
+[
+  {
+    "id": "agent-governance-overview",
+    "title": "Agent Governance Operating Model",
+    "type": "concept",
+    "tags": [
+      "governance",
+      "agents",
+      "operating-model"
+    ],
+    "body": "An AI agent governance program defines owners, controls, evidence, and escalation paths for production agents. The operating model starts with an agent registry, approved tools, retrieval provenance, policy checks, and incident response. Every agent should have a named business owner, technical owner, allowed data sources, allowed actions, and a review cadence. BaseMouse supplies context-pack provenance while MeshAI records control-plane evidence.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "agent-registry-model",
+      "context-pack-audit-evidence",
+      "policy-control-matrix"
+    ]
+  },
+  {
+    "id": "agent-registry-model",
+    "title": "Agent Registry Model",
+    "type": "feature",
+    "tags": [
+      "registry",
+      "agents",
+      "ownership"
+    ],
+    "body": "The agent registry is the inventory of production and pilot agents. Each registry entry records agent id, owner, purpose, model provider, connected tools, data domains, risk tier, deployment environment, and evidence sinks. A registry is required before policy enforcement because controls need to know which agent made a request and what that agent is allowed to retrieve or do.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "tool-registry-permissions",
+      "risk-tier-classification",
+      "meshai-control-plane"
+    ]
+  },
+  {
+    "id": "tool-registry-permissions",
+    "title": "Tool Registry and Permission Scopes",
+    "type": "feature",
+    "tags": [
+      "tools",
+      "permissions",
+      "registry"
+    ],
+    "body": "Tool governance maps every callable tool to scopes, owners, approval rules, and audit requirements. Examples include read-only CRM search, write-capable refund actions, deployment commands, and database query tools. High-risk tools require explicit approval and evidence. Agents should not receive broad tool access just because a model can call functions.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "least-privilege-agent-policy",
+      "approval-workflows",
+      "agent-registry-model"
+    ]
+  },
+  {
+    "id": "context-pack-audit-evidence",
+    "title": "Context Pack Audit Evidence",
+    "type": "feature",
+    "tags": [
+      "context-pack",
+      "audit",
+      "evidence",
+      "provenance"
+    ],
+    "body": "A context pack is audit evidence when it records query text, result ids, versions, checksums, citations, filters, retrieval mode, and timestamps. This evidence answers what information grounded an agent answer without copying document bodies into traces. BaseMouse context packs use versioned schemas so auditors can reconstruct what an agent saw at decision time.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "otel-evidence-span",
+      "provenance-checksum-policy",
+      "retrieval-evidence-retention"
+    ]
+  },
+  {
+    "id": "otel-evidence-span",
+    "title": "OpenTelemetry Evidence Span",
+    "type": "feature",
+    "tags": [
+      "opentelemetry",
+      "otel",
+      "evidence",
+      "traces"
+    ],
+    "body": "The OpenTelemetry evidence span represents the retrieval step. It includes service.name, agent id, query hash or query text according to policy, document ids, result count, retrieval mode, filters, latency, and pack checksum. It must never include raw document bodies. The span can be sent to MeshAI, Datadog, Honeycomb, Grafana Tempo, or an OpenTelemetry Collector.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "context-pack-audit-evidence",
+      "collector-fanout-pattern",
+      "privacy-redaction-rules"
+    ]
+  },
+  {
+    "id": "collector-fanout-pattern",
+    "title": "OTel Collector Fanout Pattern",
+    "type": "note",
+    "tags": [
+      "opentelemetry",
+      "collector",
+      "fanout"
+    ],
+    "body": "A collector fanout pattern lets one BaseMouse evidence span go to multiple backends. Operations teams may send traces to Grafana Tempo or Honeycomb while compliance sends the same evidence to MeshAI. Fanout avoids vendor lock-in and prevents every agent team from writing a custom integration.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "otel-evidence-span",
+      "meshai-control-plane"
+    ]
+  },
+  {
+    "id": "provenance-checksum-policy",
+    "title": "Provenance and Checksum Policy",
+    "type": "policy",
+    "tags": [
+      "provenance",
+      "checksum",
+      "integrity"
+    ],
+    "body": "Every retrieved document must carry a stable id, version, source path, updated timestamp, and content checksum. Checksums detect tampering or drift between retrieval and later audit. If a policy document changes after an agent answer, the audit trail should show exactly which version and checksum grounded the original response.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "stale-context-incident",
+      "context-pack-audit-evidence"
+    ]
+  },
+  {
+    "id": "retrieval-evidence-retention",
+    "title": "Retrieval Evidence Retention Schedule",
+    "type": "policy",
+    "tags": [
+      "retention",
+      "audit",
+      "evidence"
+    ],
+    "body": "Retention rules define how long retrieval evidence is kept. Low-risk internal copilots may keep spans for 30 days, while regulated customer-impacting agents may keep evidence for 180 days or longer. Evidence retention should store ids, checksums, timestamps, and policy outcomes, not document bodies unless an explicit legal hold applies.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "eu-ai-act-logging-controls",
+      "privacy-redaction-rules"
+    ]
+  },
+  {
+    "id": "privacy-redaction-rules",
+    "title": "Privacy Redaction Rules for Evidence",
+    "type": "policy",
+    "tags": [
+      "privacy",
+      "redaction",
+      "pii"
+    ],
+    "body": "Evidence payloads should avoid raw personal data. Query text may be redacted, hashed, or classified before export depending on the data domain. Document ids and checksums are usually safer than document bodies. If a query contains PII, the redaction layer should emit a classification label and redacted query preview, not the raw string.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "otel-evidence-span",
+      "data-classification-policy"
+    ]
+  },
+  {
+    "id": "data-classification-policy",
+    "title": "Data Classification for Agent Context",
+    "type": "policy",
+    "tags": [
+      "data",
+      "classification",
+      "policy"
+    ],
+    "body": "Agent context sources should be classified as public, internal, confidential, regulated, or restricted. Classification controls what agents can retrieve, what evidence can be exported, and whether human approval is required. Retrieval policies should combine data classification with agent risk tier and user role.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "least-privilege-agent-policy",
+      "risk-tier-classification"
+    ]
+  },
+  {
+    "id": "least-privilege-agent-policy",
+    "title": "Least Privilege Agent Policy",
+    "type": "policy",
+    "tags": [
+      "policy",
+      "least-privilege",
+      "access"
+    ],
+    "body": "Agents should retrieve only the minimum context needed for a task and call only the tools required for their role. A support bot may retrieve refund policy and customer status but not deployment secrets. A code review agent may read repository docs but not production billing tools. Least privilege reduces blast radius when prompts are manipulated.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "tool-registry-permissions",
+      "prompt-injection-playbook"
+    ]
+  },
+  {
+    "id": "policy-control-matrix",
+    "title": "Policy Control Matrix",
+    "type": "policy",
+    "tags": [
+      "controls",
+      "policy",
+      "matrix"
+    ],
+    "body": "The policy control matrix maps risks to controls and evidence. Example rows include stale context, unauthorized tool use, missing owner, unapproved data source, excessive cost, and prompt injection. For each row, define preventive controls, detective controls, evidence source, owner, and escalation path.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "agent-governance-overview",
+      "eu-ai-act-logging-controls",
+      "incident-severity-model"
+    ]
+  },
+  {
+    "id": "risk-tier-classification",
+    "title": "Agent Risk Tier Classification",
+    "type": "concept",
+    "tags": [
+      "risk",
+      "tier",
+      "classification"
+    ],
+    "body": "Risk tiering separates low-risk internal assistants from high-risk agents that affect customers, money, legal obligations, or safety. Tier determines logging, review, approval, and retention requirements. High-risk agents require stronger retrieval evidence, tool approval, cost monitoring, and incident response.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "eu-ai-act-risk-map",
+      "approval-workflows"
+    ]
+  },
+  {
+    "id": "eu-ai-act-risk-map",
+    "title": "EU AI Act Risk Map for Agents",
+    "type": "concept",
+    "tags": [
+      "eu-ai-act",
+      "risk",
+      "compliance"
+    ],
+    "body": "The EU AI Act risk map helps teams identify whether an agent is prohibited, high-risk, limited-risk, or minimal-risk. Most enterprise copilots are not automatically high-risk, but agents that influence employment, credit, education, healthcare, or access to essential services require stronger documentation, logging, human oversight, and monitoring.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "eu-ai-act-logging-controls",
+      "risk-tier-classification"
+    ]
+  },
+  {
+    "id": "eu-ai-act-logging-controls",
+    "title": "EU AI Act Logging Controls",
+    "type": "policy",
+    "tags": [
+      "eu-ai-act",
+      "logging",
+      "audit"
+    ],
+    "body": "Logging controls for regulated AI systems should capture meaningful events: agent request, model/tool choice, retrieved context ids, policy decisions, human approvals, outputs, and incidents. BaseMouse contributes retrieval evidence; MeshAI can correlate it with model, tool, cost, and policy telemetry.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "context-pack-audit-evidence",
+      "meshai-control-plane",
+      "retrieval-evidence-retention"
+    ]
+  },
+  {
+    "id": "human-oversight-checkpoints",
+    "title": "Human Oversight Checkpoints",
+    "type": "policy",
+    "tags": [
+      "human-oversight",
+      "approval",
+      "controls"
+    ],
+    "body": "Human oversight checkpoints define when an agent must pause for review. Examples include refunds above a threshold, policy exceptions, regulated advice, production deployment, or access to restricted records. Evidence should record who approved the action, the context pack used, and the tool call that followed.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "approval-workflows",
+      "tool-registry-permissions"
+    ]
+  },
+  {
+    "id": "approval-workflows",
+    "title": "Approval Workflows for High-Risk Agent Actions",
+    "type": "feature",
+    "tags": [
+      "approval",
+      "workflow",
+      "risk"
+    ],
+    "body": "Approval workflows route high-risk actions to a human or trusted service before execution. The approval request should include agent id, proposed action, retrieved context ids, policy reason, and risk tier. The final audit event links the approval to the context pack and tool call.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "human-oversight-checkpoints",
+      "policy-violation-escalation"
+    ]
+  },
+  {
+    "id": "policy-violation-escalation",
+    "title": "Policy Violation Escalation",
+    "type": "policy",
+    "tags": [
+      "policy",
+      "escalation",
+      "incident"
+    ],
+    "body": "When an agent violates policy, the system should classify severity, notify owners, preserve evidence, and block or degrade capabilities if needed. A violation record should include agent id, policy id, context pack checksum, tool call, user, timestamp, and remediation status.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "incident-severity-model",
+      "evidence-bundle-format"
+    ]
+  },
+  {
+    "id": "incident-severity-model",
+    "title": "Agent Incident Severity Model",
+    "type": "concept",
+    "tags": [
+      "incident",
+      "severity",
+      "response"
+    ],
+    "body": "Agent incidents can be tiered by impact: SEV3 for incorrect internal answer, SEV2 for customer-facing misinformation or cost spike, SEV1 for unauthorized action, privacy leak, compliance breach, or production outage. Severity determines paging, evidence preservation, customer communication, and postmortem requirements.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "agent-incident-runbook",
+      "policy-violation-escalation"
+    ]
+  },
+  {
+    "id": "agent-incident-runbook",
+    "title": "Agent Incident Response Runbook",
+    "type": "note",
+    "tags": [
+      "incident",
+      "runbook",
+      "response"
+    ],
+    "body": "The incident runbook starts by freezing the agent or narrowing its tools, collecting the evidence bundle, identifying the triggering prompt, reviewing retrieved context, checking policy decisions, and confirming whether customer data or money moved. After containment, owners write a postmortem and add regression evals.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "evidence-bundle-format",
+      "prompt-injection-playbook",
+      "postmortem-template"
+    ]
+  },
+  {
+    "id": "evidence-bundle-format",
+    "title": "Audit Evidence Bundle Format",
+    "type": "feature",
+    "tags": [
+      "audit",
+      "evidence",
+      "bundle"
+    ],
+    "body": "An evidence bundle packages the artifacts needed to investigate or audit an agent event: registry entry, risk tier, user request, context pack metadata, document ids, checksums, retrieval scores, policy decisions, tool calls, output, approvals, and incident notes. Bundles should be exportable without exposing unnecessary document bodies.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "context-pack-audit-evidence",
+      "agent-incident-runbook"
+    ]
+  },
+  {
+    "id": "postmortem-template",
+    "title": "Agent Incident Postmortem Template",
+    "type": "note",
+    "tags": [
+      "incident",
+      "postmortem",
+      "template"
+    ],
+    "body": "The postmortem template asks: what happened, which agent and owner were involved, what context was retrieved, which policy failed, what tool actions occurred, what users were affected, what evidence was preserved, and which eval or guardrail will prevent recurrence.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "agent-incident-runbook",
+      "retrieval-quality-gates"
+    ]
+  },
+  {
+    "id": "retrieval-quality-gates",
+    "title": "Retrieval Quality Gates",
+    "type": "feature",
+    "tags": [
+      "retrieval",
+      "eval",
+      "quality"
+    ],
+    "body": "Retrieval quality gates use golden queries to test whether expected documents appear in search results and context packs. Metrics include recall, precision, MRR, and missed expected ids. Before changing embeddings, graph traversal, or ranking weights, teams should record lexical and hybrid baselines on a representative corpus.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "golden-query-design",
+      "semantic-embedding-rollout",
+      "graphrag-rollout-plan"
+    ]
+  },
+  {
+    "id": "golden-query-design",
+    "title": "Golden Query Design for Agent Governance",
+    "type": "note",
+    "tags": [
+      "eval",
+      "golden-query",
+      "retrieval"
+    ],
+    "body": "Golden queries should use realistic language from operators, auditors, and support engineers. They should not only copy document titles. Each query lists expected document ids and a product-like limit. Human review matters because synthetic expected ids can hide ranking mistakes.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "retrieval-quality-gates"
+    ]
+  },
+  {
+    "id": "semantic-embedding-rollout",
+    "title": "Semantic Embedding Rollout Plan",
+    "type": "feature",
+    "tags": [
+      "embedding",
+      "semantic",
+      "retrieval"
+    ],
+    "body": "A semantic embedding rollout starts with a measured baseline, adds a pluggable provider behind a feature flag, re-runs golden suites, and only makes the provider default if recall or MRR improves without unacceptable cost or privacy tradeoffs. Local hashed vectors remain the offline fallback.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "retrieval-quality-gates",
+      "privacy-redaction-rules"
+    ]
+  },
+  {
+    "id": "graphrag-rollout-plan",
+    "title": "GraphRAG Rollout Plan",
+    "type": "feature",
+    "tags": [
+      "graphrag",
+      "graph",
+      "retrieval"
+    ],
+    "body": "Full GraphRAG should move beyond one-hop link expansion to relationship weighting, multi-hop traversal, entity-aware paths, and cycle controls. The rollout should compare lexical, hybrid, semantic, and graph-enhanced retrieval against the same golden suite before claiming quality improvements.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "retrieval-quality-gates",
+      "semantic-embedding-rollout"
+    ]
+  },
+  {
+    "id": "prompt-injection-playbook",
+    "title": "Prompt Injection Response Playbook",
+    "type": "note",
+    "tags": [
+      "security",
+      "prompt-injection",
+      "incident"
+    ],
+    "body": "A prompt injection response starts by identifying the hostile instruction, checking which context documents were retrieved, limiting tools, and preserving evidence. Mitigations include source allowlists, tool least privilege, instruction hierarchy checks, and eval cases that reproduce the attack.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "least-privilege-agent-policy",
+      "agent-incident-runbook"
+    ]
+  },
+  {
+    "id": "cost-attribution-model",
+    "title": "Agent Cost Attribution Model",
+    "type": "feature",
+    "tags": [
+      "cost",
+      "attribution",
+      "telemetry"
+    ],
+    "body": "Cost attribution maps token, retrieval, tool, and infrastructure cost to agent id, workspace, user, and business process. Evidence spans help explain why costs changed: a new agent may retrieve more documents, a stale prompt may loop, or a tool may fan out unexpectedly.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "cost-spike-investigation",
+      "meshai-control-plane"
+    ]
+  },
+  {
+    "id": "cost-spike-investigation",
+    "title": "Cost Spike Investigation Runbook",
+    "type": "note",
+    "tags": [
+      "cost",
+      "incident",
+      "runbook"
+    ],
+    "body": "When agent cost spikes, compare baseline traffic, pack pulls, retrieved document counts, model calls, tool fanout, and error retries. Investigators should identify the agent, prompt version, retrieval mode, context pack sizes, and any policy or tool changes made before the spike.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "cost-attribution-model",
+      "otel-evidence-span"
+    ]
+  },
+  {
+    "id": "support-agent-refund-policy",
+    "title": "Support Agent Refund Policy Context",
+    "type": "policy",
+    "tags": [
+      "support",
+      "refund",
+      "policy"
+    ],
+    "body": "A support agent can answer refund questions using approved refund policy context, customer status, and order metadata. It must not issue refunds above threshold without approval. The evidence bundle should show which refund policy version grounded the answer and whether an approval checkpoint was triggered.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "human-oversight-checkpoints",
+      "context-pack-audit-evidence"
+    ]
+  },
+  {
+    "id": "customer-data-boundary",
+    "title": "Customer Data Boundary for Support Agents",
+    "type": "policy",
+    "tags": [
+      "support",
+      "privacy",
+      "customer-data"
+    ],
+    "body": "Support agents may retrieve customer-specific context only for the active case and should not mix data across tenants. Retrieval filters should include workspace, customer id, case id, and data classification. Evidence exports should avoid raw customer data unless the incident requires a legal hold.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "privacy-redaction-rules",
+      "data-classification-policy"
+    ]
+  },
+  {
+    "id": "meshai-control-plane",
+    "title": "MeshAI Agent Control Plane Integration",
+    "type": "feature",
+    "tags": [
+      "meshai",
+      "control-plane",
+      "governance"
+    ],
+    "body": "MeshAI acts as the agent control plane for registry, telemetry, policies, anomaly detection, cost intelligence, and audit artifacts. BaseMouse supplies retrieval evidence through context-pack spans. Together they connect what the agent read, what the model did, what tools ran, and which controls applied.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "agent-registry-model",
+      "otel-evidence-span",
+      "cost-attribution-model"
+    ]
+  },
+  {
+    "id": "anomaly-detection-signals",
+    "title": "Agent Anomaly Detection Signals",
+    "type": "feature",
+    "tags": [
+      "anomaly",
+      "monitoring",
+      "signals"
+    ],
+    "body": "Anomaly detection looks for unusual retrieval volume, new sensitive data domains, repeated policy denials, larger context packs, abnormal tool fanout, cost spikes, and drift from historical query patterns. Signals should link back to evidence bundles so operators can explain the alert.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "cost-spike-investigation",
+      "policy-violation-escalation"
+    ]
+  },
+  {
+    "id": "audit-dashboard-views",
+    "title": "Audit Dashboard Views",
+    "type": "feature",
+    "tags": [
+      "audit",
+      "dashboard",
+      "evidence"
+    ],
+    "body": "Audit dashboards should show agent inventory, high-risk events, evidence completeness, missing owners, policy violations, cost anomalies, retrieval trends, and unresolved incidents. A useful dashboard links each row to the context pack ids and checksums behind the event.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "evidence-bundle-format",
+      "meshai-control-plane"
+    ]
+  },
+  {
+    "id": "stale-context-incident",
+    "title": "Stale Context Incident Pattern",
+    "type": "note",
+    "tags": [
+      "stale-context",
+      "incident",
+      "provenance"
+    ],
+    "body": "A stale context incident occurs when an agent relies on an outdated policy, runbook, or customer record. The investigation compares the context pack timestamp, document version, checksum, current document state, and policy change history. Regression tests should add a golden query that catches the stale or missing source.",
+    "author": "BaseMouse Demo Corpus",
+    "createdAt": "2026-06-26T00:00:00.000Z",
+    "updatedAt": "2026-06-26T00:00:00.000Z",
+    "version": 1,
+    "links": [
+      "provenance-checksum-policy",
+      "agent-incident-runbook"
+    ]
+  }
+]

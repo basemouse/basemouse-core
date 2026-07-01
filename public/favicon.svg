@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="BaseMouse">
+  <rect x="2" y="2" width="60" height="60" rx="10" fill="#0b0b09" />
+  <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+  <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+  <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+  <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+</svg>

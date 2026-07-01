@@ -1,0 +1,12 @@
+{
+  "id": "meshai-governance-example",
+  "title": "MeshAI Governance Example",
+  "type": "experience",
+  "tags": ["meshai", "governance", "compliance", "otel", "audit"],
+  "body": "End-to-end governed flow pairing BaseMouse context with MeshAI control: retrieve a context pack (live), apply a runtime policy hook on checksum, relevance, and staleness (roadmap), execute the grounded call, and emit an OpenTelemetry context_pack span to MeshAI as audit evidence (live as of 2026-06-09). BaseMouse grounds the agent; MeshAI observes and audits which context it pulled. See docs/meshai-governance-example.md.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-06-09T00:00:00.000Z",
+  "updatedAt": "2026-06-09T00:00:00.000Z",
+  "version": 1,
+  "links": ["agent-context-engine", "agent-prompt-templates", "graphrag-provenance", "local-first-privacy"]
+}

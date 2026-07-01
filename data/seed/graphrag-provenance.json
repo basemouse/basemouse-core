@@ -1,0 +1,12 @@
+{
+  "id": "graphrag-provenance",
+  "title": "GraphRAG and Provenance",
+  "type": "concept",
+  "tags": ["graph", "provenance", "citations", "rag"],
+  "body": "Retrieval that tracks where every fact came from: source document, version, author, and checksum, so agents can cite grounded evidence.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-02-15T00:00:00.000Z",
+  "updatedAt": "2026-05-26T00:00:00.000Z",
+  "version": 2,
+  "links": ["hybrid-search", "agent-context-engine"]
+}

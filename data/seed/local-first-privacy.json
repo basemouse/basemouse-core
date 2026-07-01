@@ -1,0 +1,12 @@
+{
+  "id": "local-first-privacy",
+  "title": "Local-First Privacy",
+  "type": "principle",
+  "tags": ["privacy", "local-first", "security"],
+  "body": "Knowledge lives in your own repository by default. Context packs are exportable artifacts you control, not data shipped to a third party.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-02-28T00:00:00.000Z",
+  "updatedAt": "2026-04-09T00:00:00.000Z",
+  "version": 1,
+  "links": ["memory-capsules"]
+}

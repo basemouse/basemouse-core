@@ -1,0 +1,12 @@
+{
+  "id": "agent-context-engine",
+  "title": "Agent Context Engine",
+  "type": "concept",
+  "tags": ["agents", "context", "exports"],
+  "body": "Structured, versioned context packs optimized for AI agents, task-specific retrieval, and tool-calling workflows.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-01-04T00:00:00.000Z",
+  "updatedAt": "2026-05-18T00:00:00.000Z",
+  "version": 3,
+  "links": ["hybrid-search", "memory-capsules"]
+}

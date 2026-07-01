@@ -1,0 +1,12 @@
+{
+  "id": "agent-prompt-templates",
+  "title": "Agent Prompt Templates",
+  "type": "experience",
+  "tags": ["agents", "context", "integration", "prompts"],
+  "body": "Copy-paste system and user prompt templates for consuming basemouse.context_pack.v1. Render each entry with its citation label, prefer higher relevance.score and more recent provenance.updatedAt, and verify provenance.checksum before trusting a claim. Includes wiring notes for CrewAI, LangGraph, AutoGen, and custom agents. See docs/agent-integration.md.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-06-09T00:00:00.000Z",
+  "updatedAt": "2026-06-09T00:00:00.000Z",
+  "version": 1,
+  "links": ["agent-context-engine", "meshai-governance-example"]
+}
