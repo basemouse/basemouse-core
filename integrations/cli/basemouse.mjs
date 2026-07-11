@@ -11,7 +11,8 @@
 //                                      the mode the GitHub Action uses
 //   basemouse watch                    reconcile once, then auto-push on save
 //   basemouse register [tool]          MCP config for claude|cursor|windsurf|
-//                                      codex|gemini|grok (no arg: print all)
+//                                      codex|gemini|grok|kiro|antigravity|bob
+//                                      (no arg: print all)
 //   basemouse snippet [slug]           the CLAUDE.md "Context retrieval" block
 //
 // Env: BASEMOUSE_API_KEY (required for sync/watch; sync/watch never place it
@@ -388,6 +389,28 @@ function registerSnippets() {
       // mcp.servers[] block in ~/.grok/user-settings.json — different tool.)
       file: 'run this command',
       snippet: `grok mcp add basemouse ${url} -t http -s user \\\n  -H "Authorization: ${auth}"`
+    },
+    kiro: {
+      // AWS Kiro IDE. Per kiro.dev/docs/mcp/configuration: mcpServers with a
+      // url + headers for streamable-HTTP remotes. Kiro resolves ${ENV} refs,
+      // so the key stays out of the file.
+      file: '~/.kiro/settings/mcp.json (global) or .kiro/settings/mcp.json (project)',
+      snippet: JSON.stringify({ mcpServers: { basemouse: { url, headers: { Authorization: 'Bearer ${BASEMOUSE_API_KEY}' }, disabled: false } } }, null, 2)
+    },
+    antigravity: {
+      // Google Antigravity IDE. Per antigravity.google/docs/ide-mcp: remote
+      // HTTP servers use `serverUrl` (NOT url), under mcpServers. ${ENV} refs
+      // resolve natively. Shared config lives in ~/.gemini/config/.
+      file: '~/.gemini/config/mcp_config.json (or IDE → Manage MCP Servers → View raw config)',
+      snippet: JSON.stringify({ mcpServers: { basemouse: { serverUrl: url, headers: { Authorization: 'Bearer ${BASEMOUSE_API_KEY}' } } } }, null, 2)
+    },
+    bob: {
+      // IBM Bob. Bob's remote MCP transport is SSE; BaseMouse is stateless
+      // Streamable HTTP (no SSE stream), so a direct url won't connect —
+      // bridge through mcp-remote as a stdio server instead. (Substitute the
+      // key or export BASEMOUSE_API_KEY; mcp-remote passes the header verbatim.)
+      file: '.Bob/mcp.json (project) or Bob global MCP config',
+      snippet: JSON.stringify({ mcpServers: { basemouse: { command: 'npx', args: ['-y', 'mcp-remote', url, '--header', 'Authorization: Bearer ${BASEMOUSE_API_KEY}'] } } }, null, 2)
     }
   };
 }
@@ -485,7 +508,7 @@ usage:
   node basemouse.mjs sync [--base-dir DIR] [--only NAME]     sync a workspace of projects
   node basemouse.mjs sync --single [DIR] [--slug NAME]       sync one project directory
   node basemouse.mjs watch [--base-dir DIR] [--debounce MS]  reconcile, then auto-sync on save
-  node basemouse.mjs register [claude|cursor|windsurf|codex|gemini|grok]
+  node basemouse.mjs register [claude|cursor|windsurf|codex|gemini|grok|kiro|antigravity|bob]
   node basemouse.mjs snippet [slug]                          CLAUDE.md context-retrieval block
 
 env: BASEMOUSE_API_KEY (required for sync/watch), BASEMOUSE_BASE_URL, BASE_DIR`;

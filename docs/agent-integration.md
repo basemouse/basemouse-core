@@ -38,7 +38,9 @@ Retrieval is lexical keyword scoring by default, so `relevance.score` and `relev
 ## Or skip the HTTP glue: connect over MCP
 
 If your agent runtime speaks the Model Context Protocol (Claude Code, Cursor,
-Windsurf, Codex CLI, Gemini CLI, Grok CLI, and most agent frameworks via an MCP client),
+Windsurf, Codex CLI, Gemini CLI, Grok CLI, AWS Kiro, Google Antigravity, and
+most agent frameworks via an MCP client — plus SSE-only clients like IBM Bob
+through the `mcp-remote` stdio bridge, which `basemouse register bob` prints),
 you don't need to hand-roll the fetch at all: BaseMouse serves the same
 capabilities as MCP tools — `search`, `get_context_pack`, and
 `upsert_document` (a write tool: agents persist decisions or session context
@@ -57,6 +59,48 @@ ready-to-paste config per client. Omit the auth header to browse the public
 demo corpus. Everything below (prompt templates, citation rules, governance)
 applies identically — an MCP `get_context_pack` call returns the same
 `basemouse.context_pack.v1` JSON.
+
+## Cross-tool memory: write in one agent, read in another
+
+Because context lives in BaseMouse — not in any single tool — an agent in one
+client can persist a decision and an agent in a **different** client (different
+vendor, no shared session or history) reads it back on its next pull. That is
+the seamless part of switching tools: your project docs *and* anything an agent
+wrote back travel with you; only the live chat transcript stays local to each
+tool.
+
+The round trip, tool-agnostic:
+
+```text
+Agent A (e.g. Grok):   upsert_document  id="release-plan"
+                       body="Rollback codeword ZEBRA-9; ship Thursday."
+                       → outcome "created", version 1
+
+Agent B (e.g. Gemini): get_context_pack  tag / query for "release-plan"
+                       → reads back "Rollback codeword ZEBRA-9; ship Thursday."
+```
+
+Same thing over REST if a client isn't MCP-native (write with either agent's
+key, read with the other's — both scoped to the same workspace):
+
+```bash
+# Agent A persists a decision (idempotent: unchanged content writes nothing)
+curl -s -X PUT "https://basemouse.com/api/documents/release-plan?mode=upsert" \
+  -H "Authorization: Bearer $BASEMOUSE_API_KEY" -H "Content-Type: application/json" \
+  -d '{"title":"Release plan","body":"Rollback codeword ZEBRA-9; ship Thursday.","tags":["release"]}'
+# → {"outcome":"created","document":{"version":1,...}}
+
+# Agent B (any other tool, same workspace) reads it back, grounded and cited
+curl -s "https://basemouse.com/api/context-pack?q=rollback+codeword&limit=3" \
+  -H "Authorization: Bearer $BASEMOUSE_API_KEY"
+# → a pack whose entries include the release-plan decision, with a checksum
+```
+
+Every write is a versioned, append-only revision, so this doubles as durable
+memory across sessions and machines — re-running the write with identical
+content is a no-op (`outcome:"unchanged"`, no new revision), and every real
+change is preserved in history. Writes require an authenticated `bm_` key with
+write access; anonymous callers can read the public demo corpus but not write.
 
 ## System prompt template
 

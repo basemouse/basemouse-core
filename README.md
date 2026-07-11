@@ -135,7 +135,9 @@ claude mcp add --transport http basemouse https://basemouse.com/mcp \
 connectors are not yet supported — config-file clients work today. The
 endpoint is tool-agnostic: `node integrations/cli/basemouse.mjs register`
 prints ready-to-paste MCP config for Claude Code, Cursor, Windsurf, Codex
-CLI, Gemini CLI, and Grok CLI.)
+CLI, Gemini CLI, Grok CLI, AWS Kiro, and Google Antigravity — and SSE-only
+clients like IBM Bob via the `mcp-remote` bridge, which `basemouse register bob`
+emits.)
 
 ### Sync your workspace (any platform, any coding tool)
 
