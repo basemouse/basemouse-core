@@ -41,7 +41,7 @@ function deliver(event, { secret = WEBHOOK_SECRET, mangle = false } = {}) {
   });
 }
 
-const checkoutEvent = (id, created) => ({
+const checkoutEvent = (id, created, overrides = {}) => ({
   id,
   type: 'checkout.session.completed',
   created,
@@ -51,7 +51,8 @@ const checkoutEvent = (id, created) => ({
       payment_status: 'paid',
       customer: 'cus_webhook',
       subscription: 'sub_webhook',
-      client_reference_id: 'team'
+      client_reference_id: 'team',
+      ...overrides
     }
   }
 });
@@ -74,6 +75,17 @@ test('checkout.session.completed → pending_claim key with the tier plan', asyn
   const key = await store.findKeyByCustomer('cus_webhook');
   assert.equal(key.status, 'pending_claim');
   assert.equal(key.plan, 'team');
+});
+
+test('checkout.session.completed with an unrecognized client_reference_id falls back to starter via findTier, never stored raw', async () => {
+  const res = await deliver(checkoutEvent('evt_bad_tier_1', 120, {
+    customer: 'cus_webhook_badtier',
+    subscription: 'sub_webhook_badtier',
+    client_reference_id: 'not-a-real-tier'
+  }));
+  assert.equal(res.status, 200);
+  const key = await store.findKeyByCustomer('cus_webhook_badtier');
+  assert.equal(key.plan, 'starter', 'an unrecognized tier id must resolve through findTier, not be stored verbatim');
 });
 
 test('duplicate event id is a no-op (idempotency)', async () => {
@@ -120,6 +132,32 @@ test('subscription.updated with newer created refreshes plan from subscription m
   assert.equal(key.status, 'active', 'reactivation clears read_only');
   assert.equal(key.plan, 'starter', 'tier travels on subscription metadata (OV-E4)');
   assert.equal(key.cancelledAt, null, 'reactivation clears cancelled_at');
+});
+
+test('subscription.updated with status=past_due goes read_only, not active', async () => {
+  const res = await deliver({
+    id: 'evt_past_due_1',
+    type: 'customer.subscription.updated',
+    created: 500,
+    data: { object: { customer: 'cus_webhook', status: 'past_due', metadata: { tier: 'starter' } } }
+  });
+  assert.equal(res.status, 200);
+  const key = await store.findKeyByCustomer('cus_webhook');
+  assert.equal(key.status, 'read_only', 'a lapsed payment must not keep write access just because it is not yet canceled');
+  assert.ok(key.cancelledAt, 'the read-only transition records when it started');
+});
+
+test('subscription.updated back to active reactivates a key that went read_only for past_due', async () => {
+  const res = await deliver({
+    id: 'evt_recovered_1',
+    type: 'customer.subscription.updated',
+    created: 600,
+    data: { object: { customer: 'cus_webhook', status: 'active', metadata: { tier: 'starter' } } }
+  });
+  assert.equal(res.status, 200);
+  const key = await store.findKeyByCustomer('cus_webhook');
+  assert.equal(key.status, 'active');
+  assert.equal(key.cancelledAt, null);
 });
 
 test('unknown event types are ACKed (200), never an error loop', async () => {

@@ -44,7 +44,8 @@
           <a href="#api">api</a>
           <a href="#pricing">pricing</a>
           <a href="#open-core">open source</a>
-          <a href="https://github.com/basemouse/basemouse">docs</a>
+          <a href="#faq">faq</a>
+          <a href="https://github.com/basemouse/basemouse-core">docs</a>
         </nav>
         <a class="btn primary topbar-cta" href="#pricing">Get your key</a>
       </header>
@@ -168,15 +169,76 @@
             today versus what's on the roadmap.
           </p>
           <div class="cta-row" aria-label="Open source links">
-            <a class="btn primary" href="https://github.com/basemouse/basemouse">View on GitHub</a>
-            <a class="btn ghost" href="https://github.com/basemouse/basemouse/blob/main/docs/open-source.md">Open-core docs</a>
+            <a class="btn primary" href="https://github.com/basemouse/basemouse-core">View on GitHub</a>
+            <a class="btn ghost" href="https://github.com/basemouse/basemouse-core/blob/master/docs/open-source.md">Open-core docs</a>
           </div>
+        </section>
+
+        <section class="faq" id="faq" aria-label="Frequently asked questions">
+          <p class="spec-strip"><span>FAQ</span><span>PLAIN ANSWERS</span></p>
+          <h2 aria-label="Questions, answered.">QUESTIONS, ANSWERED.</h2>
+          <details>
+            <summary>What does BaseMouse actually do?</summary>
+            <p>
+              It's a place to store the documents your AI agents read from. You import your docs,
+              your agent asks a question over one API call, and it gets back the most relevant
+              passages with a source on each one. Every change to every document is kept on the
+              record, so you can always check where an answer came from.
+            </p>
+          </details>
+          <details>
+            <summary>How is this different from a vector database or building RAG myself?</summary>
+            <p>
+              A vector database gives you one ingredient. BaseMouse is the finished dish: import,
+              search, citations, tamper-proof fingerprints, and full change history behind a single
+              endpoint. No pipeline to build, no SDK to install, nothing to keep in sync.
+            </p>
+          </details>
+          <details>
+            <summary>What can I import?</summary>
+            <p>
+              Folders of markdown today. Labels in your files are kept and made searchable, and
+              re-importing is always safe: no duplicates, and a clear report if a file doesn't go
+              through. Docs can also stay in sync on their own: a GitHub Action pushes a repo's
+              agent docs on every push, and a small cross-platform CLI syncs a whole projects
+              folder — or watches it and pushes the moment you save. Bringing docs from another
+              source? That's exactly what the
+              <a href="/design-partner.html">design partner program</a> is for.
+            </p>
+          </details>
+          <details>
+            <summary>Do you train AI models on my documents?</summary>
+            <p>
+              No. BaseMouse stores your documents and serves passages back to your own agents.
+              That's the whole job. Our operational telemetry never includes document contents,
+              and if you self-host the core, your docs never leave your servers at all.
+            </p>
+          </details>
+          <details>
+            <summary>Can I run it myself?</summary>
+            <p>
+              Yes. The core engine is MIT-licensed and self-hostable, with no license key and
+              nothing phoning home. The paid hosted version adds the running, billing, and support.
+              Grab it <a href="https://github.com/basemouse/basemouse-core">on GitHub</a>.
+            </p>
+          </details>
+          <details>
+            <summary>How do my agents connect?</summary>
+            <p>
+              One HTTP call, from any language or agent framework. The demo needs no key at all,
+              and your own docs need one header. See <a href="#api">the API section</a> for the
+              exact request and response. Prefer a native connection? BaseMouse speaks the Model
+              Context Protocol at <code>POST /mcp</code>, so agents like Claude Code, Cursor,
+              Codex CLI, and Gemini CLI connect directly — same <code>search</code> and
+              <code>get_context_pack</code> tools, same auth and quota.
+            </p>
+          </details>
         </section>
       </main>
 
       <footer class="colophon">
         <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
-        <span class="colophon-mid">roadmap: MCP endpoint · change webhooks · <a href="https://github.com/basemouse/basemouse">docs</a> · <a href="mailto:devsupport@basemouse.com?subject=BaseMouse">contact</a></span>
+        <span class="colophon-mid">roadmap: change webhooks · <a href="https://github.com/basemouse/basemouse-core">docs</a> · <a href="/terms.html">terms</a> · <a href="/privacy.html">privacy</a> · <a href="mailto:devsupport@basemouse.com?subject=BaseMouse">contact</a></span>
         <span>NO BLACK BOXES. NO SILENT EDITS.</span>
       </footer>
     </div>

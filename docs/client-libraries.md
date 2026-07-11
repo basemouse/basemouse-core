@@ -51,3 +51,11 @@ BASEMOUSE_API_KEY=bm_...
 node --test test/client-libraries.test.js
 python3 -m unittest clients/python/test_basemouse_client.py
 ```
+
+## See also
+
+Not writing code against the API? The workspace sync CLI
+(`integrations/cli/basemouse.mjs` — `sync`/`watch`/`register`/`snippet`) and the
+GitHub Action (`integrations/github-action/`) cover the "keep my docs in
+BaseMouse" case without any client code, and `docs/agent-integration.md` covers
+consuming context packs from agents (REST or MCP).

@@ -43,6 +43,15 @@ export class DocumentNotFoundError extends ApiError {
   }
 }
 
+// Surfaced by the version-free upsert when its bounded convergence retries are
+// exhausted — the caller was told it needs no version, so it must never see
+// expectedVersion vocabulary. Retryable by design.
+export class ConcurrentWriteError extends ApiError {
+  constructor(id) {
+    super(409, 'concurrent_write', `document "${id}" is being modified concurrently — retry the upsert`);
+  }
+}
+
 export class ValidationError extends ApiError {
   constructor(message) {
     super(400, 'invalid_document', message);
@@ -55,8 +64,14 @@ export class UnauthorizedError extends ApiError {
   }
 }
 
+// Cancellation policy (OV5): read-only immediately, 90-day grace before purge.
+const GRACE_PERIOD_DAYS = 90;
+
 export class ReadOnlyKeyError extends ApiError {
-  constructor(graceEndsAt = null) {
+  constructor(cancelledAt = null) {
+    const graceEndsAt = cancelledAt
+      ? new Date(new Date(cancelledAt).getTime() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000).toISOString()
+      : null;
     super(403, 'read_only_key', 'this key is read-only (subscription cancelled); reads and export keep working', {
       graceEndsAt
     });

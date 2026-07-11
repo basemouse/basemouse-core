@@ -8,3 +8,6 @@ coverage/
 
 # Local MCP configs
 .mcp.json
+
+# Per-developer session log (imported into BaseMouse from disk; not a shared artifact)
+/PROGRESS.md

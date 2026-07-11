@@ -74,7 +74,10 @@ export async function claimKeyHandler(store, billing, payload, { fetchImpl } = {
 export async function rotateKeyHandler(store, auth) {
   if (!auth) throw new UnauthorizedError('rotation requires the current key');
   const plaintext = generateKey();
-  await store.rotateKeyHash(auth.keyId, hashKey(plaintext), 'rotate-endpoint');
+  const rotated = await store.rotateKeyHash(auth.keyId, hashKey(plaintext), 'rotate-endpoint');
+  // rotateKeyHash returns null when the key id no longer exists (e.g. revoked
+  // in a race right after auth resolved) — never claim success in that case.
+  if (!rotated) throw new UnauthorizedError('this key is no longer valid; it may have been revoked');
   return {
     status: 200,
     body: {

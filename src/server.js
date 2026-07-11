@@ -14,8 +14,10 @@ import {
   MAX_DOC_BODY_BYTES,
   createDocumentHandler,
   deleteDocumentHandler,
+  getDocumentHandler,
   historyHandler,
-  updateDocumentHandler
+  updateDocumentHandler,
+  upsertDocumentHandler
 } from './handlers/documents.js';
 import { claimKeyHandler, portalHandler, rotateKeyHandler, usageHandler } from './handlers/keys.js';
 import { stripeWebhookHandler } from './handlers/stripe-webhook.js';
@@ -359,13 +361,20 @@ export function createApp(repositoryOrStore, options = {}) {
         const auth = await resolveKey(req, store);
         const rate = checkReadRate(req, auth);
         if (rate) return sendJson(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(rate.retryAfterSec) });
-        const body = await readJsonBody(req);
+        // MCP now carries document writes (upsert_document), so the body cap
+        // must fit a full document plus the JSON-RPC envelope — the 4 KB
+        // default would 413 any realistic write while REST accepts 256 KB.
+        const body = await readJsonBody(req, MAX_DOC_BODY_BYTES + 4096);
         if (!body.ok) return sendJson(res, body.status, body.payload);
         const { docs } = await loadVisible(auth);
         const reply = await handleMcpRequest(body.value, {
           docs,
           auth,
-          meterPackPull: auth ? meterFor(auth) : null
+          meterPackPull: auth ? meterFor(auth) : null,
+          // Write door: upsert_document goes through the same store handler
+          // and plan limits as REST — one write contract, two doors.
+          store,
+          writeLimits: auth ? limitsForPlan(planLimits, auth.plan) : null
         });
         if (reply === null) {
           res.writeHead(202, SECURITY_HEADERS);
@@ -417,9 +426,15 @@ export function createApp(repositoryOrStore, options = {}) {
       if (docMatch) {
         const [, docId, isHistory] = docMatch;
         const auth = await resolveKey(req, store);
+        const rate = checkReadRate(req, auth);
+        if (rate) return sendJson(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(rate.retryAfterSec) });
 
         if (isHistory && docId && (method === 'GET' || method === 'HEAD')) {
           const result = await historyHandler(store, auth, docId);
+          return sendJson(res, result.status, result.body);
+        }
+        if (!isHistory && docId && (method === 'GET' || method === 'HEAD')) {
+          const result = await getDocumentHandler(store, auth, docId);
           return sendJson(res, result.status, result.body);
         }
         if (method === 'POST' && !docId) {
@@ -432,14 +447,20 @@ export function createApp(repositoryOrStore, options = {}) {
         if (method === 'PUT' && docId && !isHistory) {
           const body = await readJsonBody(req, MAX_DOC_BODY_BYTES);
           if (!body.ok) return sendJson(res, body.status, body.payload);
-          const result = await updateDocumentHandler(store, auth, docId, body.value, req.headers['if-match']);
+          const limits = auth ? limitsForPlan(planLimits, auth.plan) : null;
+          // ?mode=upsert (design doc D9): idempotent create/update/unchanged,
+          // no expectedVersion required (a supplied precondition is rejected,
+          // never silently discarded). Plain PUT keeps optimistic-lock semantics.
+          const result = url.searchParams.get('mode') === 'upsert'
+            ? await upsertDocumentHandler(store, auth, docId, body.value, req.headers['if-match'], limits)
+            : await updateDocumentHandler(store, auth, docId, body.value, req.headers['if-match'], limits);
           return sendJson(res, result.status, result.body);
         }
         if (method === 'DELETE' && docId && !isHistory) {
           const result = await deleteDocumentHandler(store, auth, docId);
           return sendJson(res, result.status, result.body);
         }
-        return sendJson(res, 405, { error: 'method_not_allowed', allow: 'GET, POST, PUT, DELETE' });
+        return sendJson(res, 405, { error: 'method_not_allowed', allow: 'GET, HEAD, POST, PUT, DELETE' });
       }
 
       if (method !== 'GET' && method !== 'HEAD') {
@@ -501,7 +522,11 @@ export function createApp(repositoryOrStore, options = {}) {
         const auth = await resolveKey(req, store);
         const rate = checkReadRate(req, auth);
         if (rate) return sendJson(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(rate.retryAfterSec) });
-        const pageLimit = Math.min(Math.max(Number.parseInt(url.searchParams.get('limit') || '100', 10) || 100, 1), 500);
+        // Number.parseInt(...) || 100 would treat a valid, explicit limit=0 as
+        // falsy and silently substitute the default — parse first, and only
+        // fall back to the default when parsing actually failed (NaN).
+        const parsedLimit = Number.parseInt(url.searchParams.get('limit'), 10);
+        const pageLimit = Math.min(Math.max(Number.isNaN(parsedLimit) ? 100 : parsedLimit, 1), 500);
         const offset = Math.max(Number.parseInt(url.searchParams.get('offset') || '0', 10) || 0, 0);
         const { docs, degraded } = await loadVisible(auth);
         return sendJson(res, 200, {
@@ -557,14 +582,15 @@ export function createApp(repositoryOrStore, options = {}) {
         const auth = await resolveKey(req, store);
         const rate = checkReadRate(req, auth);
         if (rate) return sendJson(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(rate.retryAfterSec) });
+        const { docs, degraded } = await loadVisible(auth);
         // Pack pulls are the metered unit: authenticated pulls count against
         // the plan's monthly quota (exact, in Postgres); anonymous demo pulls
-        // are rate-limited per IP instead.
+        // are rate-limited per IP instead. Metered only after the load above
+        // succeeds, so a store outage never burns quota for an undelivered pack.
         if (auth) {
           await meterFor(auth)();
         }
         metrics.inc('pack_pulls');
-        const { docs, degraded } = await loadVisible(auth);
         const startMs = Date.now();
         const pack = createContextPack(docs, {
           query: q.value || undefined,
@@ -639,6 +665,14 @@ export function createApp(repositoryOrStore, options = {}) {
 
 // Only auto-start when run directly, so tests can import createApp.
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  // NOTE: the DB crash this branch used to guard against (an idle pooler client
+  // dropped during a Supabase incident) is fixed at its source by the
+  // pool.on('error') handler in PgStore. Request-path DB failures are already
+  // awaited and mapped to StoreUnavailableError → seed-corpus fallback
+  // (see the reads handler), so they never surface as unhandled rejections.
+  // We deliberately do NOT install a global unhandledRejection/uncaughtException
+  // trap: swallowing those would hide genuine latent bugs from crash monitoring;
+  // Node's fail-fast default is the safer behavior here.
   const seeds = await loadDocuments();
   const fallbackStore = new MemoryStore(seeds);
   let store = fallbackStore;

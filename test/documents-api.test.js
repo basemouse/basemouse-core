@@ -229,3 +229,161 @@ test('R1: /api/repository keeps the UI contract (count + items) and paginates', 
   const authedBody = await authedRepo.json();
   assert.ok(authedBody.count > seeds.length, 'a key sees public + its own workspace');
 });
+
+// --- D9 idempotent upsert + single-doc GET (design doc server-side-ingestion.md) ---
+
+test('upsert: create → unchanged → updated, with server-owned comparison', async () => {
+  const put = (payload) => fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A), body: JSON.stringify(payload)
+  });
+
+  const created = await put({ title: 'Upsert Doc', body: 'first', tags: ['project:x'] });
+  assert.equal(created.status, 201);
+  const c = await created.json();
+  assert.equal(c.outcome, 'created');
+  assert.equal(c.document.version, 1);
+
+  // Identical content (modulo the trim the server applies) writes nothing.
+  const same = await put({ title: ' Upsert Doc ', body: 'first\n', tags: ['project:x'] });
+  assert.equal(same.status, 200);
+  const s = await same.json();
+  assert.equal(s.outcome, 'unchanged');
+  assert.equal(s.document.version, 1);
+  const history = await (await fetch(`${base}/api/documents/ups-doc/history`, { headers: authed(KEY_A) })).json();
+  assert.equal(history.revisions, 1, 'unchanged upsert must not grow the append-only history');
+
+  const changed = await put({ title: 'Upsert Doc', body: 'second', tags: ['project:x'] });
+  assert.equal(changed.status, 200);
+  const u = await changed.json();
+  assert.equal(u.outcome, 'updated');
+  assert.equal(u.document.version, 2);
+});
+
+test('upsert: tags merge additively — never destroys tags added elsewhere', async () => {
+  await fetch(`${base}/api/documents/ups-tags?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'T', body: 'b', tags: ['project:x'] })
+  });
+  // Another writer adds a tag through the authoritative PUT.
+  await fetch(`${base}/api/documents/ups-tags`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ tags: ['project:x', 'important'], expectedVersion: 1 })
+  });
+  // A read-free upsert with only its own tag neither churns nor wipes.
+  const same = await (await fetch(`${base}/api/documents/ups-tags?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'T', body: 'b', tags: ['project:x'] })
+  })).json();
+  assert.equal(same.outcome, 'unchanged');
+  assert.deepEqual(same.document.tags, ['project:x', 'important']);
+});
+
+test('upsert: validation and auth mirror the write path', async () => {
+  const anon = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: 't', body: 'b' })
+  });
+  assert.equal(anon.status, 401);
+
+  const mismatch = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ id: 'other-id', title: 't', body: 'b' })
+  });
+  assert.equal(mismatch.status, 400);
+  assert.match((await mismatch.json()).message, /does not match/);
+});
+
+test('GET /api/documents/:id returns the current revision with workspace scoping', async () => {
+  const doc = await fetch(`${base}/api/documents/ups-doc`, { headers: authed(KEY_A) });
+  assert.equal(doc.status, 200);
+  const body = await doc.json();
+  assert.equal(body.id, 'ups-doc');
+  assert.equal(body.version, 2);
+  assert.equal(body.body, 'second');
+
+  // Other workspaces (and anonymous callers) cannot see it.
+  const cross = await fetch(`${base}/api/documents/ups-doc`, { headers: authed(KEY_B) });
+  assert.equal(cross.status, 404);
+  const anon = await fetch(`${base}/api/documents/ups-doc`);
+  assert.equal(anon.status, 404);
+
+  // Anonymous CAN read a public seed doc by id.
+  const seedRes = await fetch(`${base}/api/documents/${seeds[0].id}`);
+  assert.equal(seedRes.status, 200);
+});
+
+test('upsert: malformed tags are rejected with 400, never iterated into the doc', async () => {
+  // Strings are iterable — without up-front validation, tags:"prod" would
+  // merge as ['p','r','o','d'] and PASS the normalizer's array check.
+  const asString = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Upsert Doc', body: 'second', tags: 'prod' })
+  });
+  assert.equal(asString.status, 400);
+  assert.match((await asString.json()).message, /array of strings/);
+
+  // Non-iterables must be a 400 ValidationError, not a raw TypeError → 500.
+  const asNumber = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Upsert Doc', body: 'second', tags: 5 })
+  });
+  assert.equal(asNumber.status, 400);
+});
+
+test('upsert: a version precondition is rejected loudly, never silently discarded', async () => {
+  const viaBody = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Upsert Doc', body: 'stale write', expectedVersion: 1 })
+  });
+  assert.equal(viaBody.status, 400);
+  assert.match((await viaBody.json()).message, /incompatible with mode=upsert/);
+
+  const viaHeader = await fetch(`${base}/api/documents/ups-doc?mode=upsert`, {
+    method: 'PUT', headers: { ...authed(KEY_A), 'If-Match': '1' },
+    body: JSON.stringify({ title: 'Upsert Doc', body: 'stale write' })
+  });
+  assert.equal(viaHeader.status, 400);
+
+  // Neither attempt wrote anything.
+  const doc = await (await fetch(`${base}/api/documents/ups-doc`, { headers: authed(KEY_A) })).json();
+  assert.equal(doc.body, 'second');
+});
+
+test('upsert resurrects a tombstoned id: version continues, createdAt is fresh and matches the row', async () => {
+  await fetch(`${base}/api/documents/rez-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Rez', body: 'v1' })
+  });
+  await fetch(`${base}/api/documents/rez-doc`, { method: 'DELETE', headers: authed(KEY_A) });
+
+  const rez = await fetch(`${base}/api/documents/rez-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Rez', body: 'v2 after resurrection' })
+  });
+  assert.equal(rez.status, 201, 'resurrection is a create');
+  const created = await rez.json();
+  assert.equal(created.outcome, 'created');
+  assert.equal(created.document.version, 3, 'history continues past the tombstone (v1, v2 tombstone, v3)');
+
+  // The stored row must agree with the 201 body (the pg resurrection UPDATE
+  // rewrites created_at for exactly this contract).
+  const readBack = await (await fetch(`${base}/api/documents/rez-doc`, { headers: authed(KEY_A) })).json();
+  assert.equal(readBack.createdAt, created.document.createdAt);
+});
+
+test('delete releases live storage bytes: delete+recreate cycles do not inflate the quota', async () => {
+  const bigBody = 'x'.repeat(5_000);
+  await fetch(`${base}/api/documents/cycle-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Cycle', body: bigBody })
+  });
+  const after1 = store.keys.get('ws-a').storageBytes;
+  await fetch(`${base}/api/documents/cycle-doc`, { method: 'DELETE', headers: authed(KEY_A) });
+  await fetch(`${base}/api/documents/cycle-doc?mode=upsert`, {
+    method: 'PUT', headers: authed(KEY_A),
+    body: JSON.stringify({ title: 'Cycle', body: bigBody })
+  });
+  const after2 = store.keys.get('ws-a').storageBytes;
+  assert.ok(Math.abs(after2 - after1) < 500,
+    `delete+recreate must be storage-neutral (was ${after1}, now ${after2})`);
+});

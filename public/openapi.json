@@ -5,10 +5,18 @@
     "version": "0.3.0",
     "description": "Context infrastructure for AI agents: import your docs, pull cited, checksummed context packs, audit the append-only record. Authenticate with `Authorization: Bearer bm_...`; anonymous reads see the public demo corpus. An MCP endpoint exposing the same tools lives at POST /mcp (JSON-RPC, Streamable HTTP, stateless)."
   },
-  "servers": [{ "url": "https://basemouse.com" }],
+  "servers": [
+    {
+      "url": "https://basemouse.com"
+    }
+  ],
   "components": {
     "securitySchemes": {
-      "apiKey": { "type": "http", "scheme": "bearer", "bearerFormat": "bm_<48 hex chars>" }
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "bm_<48 hex chars>"
+      }
     }
   },
   "paths": {
@@ -24,23 +32,70 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "ok": { "type": "boolean" },
-                    "service": { "type": "string" },
-                    "version": { "type": "string" },
-                    "documents": { "type": "integer" },
-                    "billing": { "type": "boolean" },
-                    "meshai": { "type": "boolean" },
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "documents": {
+                      "type": "integer"
+                    },
+                    "billing": {
+                      "type": "boolean"
+                    },
+                    "meshai": {
+                      "type": "boolean"
+                    },
                     "license": {
                       "type": "object",
                       "description": "Non-secret license posture. Never includes the license key.",
                       "properties": {
-                        "mode": { "type": "string", "enum": ["self-hosted", "hosted"] },
-                        "selfHosted": { "type": "boolean" },
-                        "tier": { "type": "string", "enum": ["open", "starter", "team", "enterprise"] },
-                        "licensed": { "type": "boolean", "description": "whether a license key is present (presence only)" },
-                        "source": { "type": "string", "enum": ["env", "none"] },
-                        "expiresAt": { "type": ["string", "null"] },
-                        "expired": { "type": ["boolean", "null"] }
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "self-hosted",
+                            "hosted"
+                          ]
+                        },
+                        "selfHosted": {
+                          "type": "boolean"
+                        },
+                        "tier": {
+                          "type": "string",
+                          "enum": [
+                            "open",
+                            "starter",
+                            "team",
+                            "enterprise"
+                          ]
+                        },
+                        "licensed": {
+                          "type": "boolean",
+                          "description": "whether a license key is present (presence only)"
+                        },
+                        "source": {
+                          "type": "string",
+                          "enum": [
+                            "env",
+                            "none"
+                          ]
+                        },
+                        "expiresAt": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "expired": {
+                          "type": [
+                            "boolean",
+                            "null"
+                          ]
+                        }
                       }
                     }
                   }
@@ -56,12 +111,62 @@
         "summary": "Ranked search over your visible workspaces (lexical or hybrid)",
         "description": "retrieval=lexical (default) ranks by term overlap. retrieval=hybrid combines three signals: lexical anchors, one hop of graph expansion along document links, and a local vector signal. The vector signal uses BaseMouse's built-in offline hashed-feature embeddings (no external vector DB, no paid embedding API, no network) — disable it with BASEMOUSE_VECTOR_RETRIEVAL=off, leaving graph+lexical hybrid. Each result carries a `retrieval` block ({ mode, signals: array of 'lexical'/'vector'/'graph', reasons: array of human-readable strings, sourceScores: per-signal score map }). When the vector signal is active the response also includes a top-level `vector` block ({ backend: 'local-hashed', dimensions }).",
         "parameters": [
-          { "name": "q", "in": "query", "required": true, "schema": { "type": "string", "maxLength": 256 } },
-          { "name": "retrieval", "in": "query", "description": "Ranking mode. 'lexical' (default) is term-overlap ranking; 'hybrid' adds one-hop graph expansion plus a local hashed-vector signal, with per-result signal explanations. Vectors are local/offline, not a paid embedding API or external vector DB.", "schema": { "type": "string", "enum": ["lexical", "hybrid"], "default": "lexical" } },
-          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["concept", "feature", "experience", "principle", "note", "policy"] } },
-          { "name": "tag", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          {
+            "name": "retrieval",
+            "in": "query",
+            "description": "Ranking mode. 'lexical' (default) is term-overlap ranking; 'hybrid' adds one-hop graph expansion plus a local hashed-vector signal, with per-result signal explanations. Vectors are local/offline, not a paid embedding API or external vector DB.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lexical",
+                "hybrid"
+              ],
+              "default": "lexical"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "concept",
+                "feature",
+                "experience",
+                "principle",
+                "note",
+                "policy"
+              ]
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "Echoes retrieval mode; matches with scores and matchedTerms (plus a per-result retrieval block and a top-level vector backend block when retrieval=hybrid with local vectors enabled)" }, "400": { "description": "invalid_query / invalid_filter / invalid_retrieval" }, "429": { "description": "rate_limited" } }
+        "responses": {
+          "200": {
+            "description": "Echoes retrieval mode; matches with scores and matchedTerms (plus a per-result retrieval block and a top-level vector backend block when retrieval=hybrid with local vectors enabled)"
+          },
+          "400": {
+            "description": "invalid_query / invalid_filter / invalid_retrieval"
+          },
+          "429": {
+            "description": "rate_limited"
+          }
+        }
       }
     },
     "/api/context-pack": {
@@ -69,91 +174,393 @@
         "summary": "Generate a cited, checksummed basemouse.context_pack.v1",
         "description": "Authenticated pulls count against the plan's monthly quota. The response carries X-BaseMouse-Pack-Checksum (sha-256 of the pack, first 16 hex chars). X-BaseMouse-Degraded: true marks demo-fallback corpus during a store outage. retrieval=hybrid combines lexical anchors, one-hop graph expansion, and a local offline vector signal: the pack echoes a top-level `retrieval` summary ({ mode, signals, weights, vector }) and every entry carries a `retrieval` block ({ mode, signals, reasons, sourceScores }) — signals can include 'lexical', 'vector', and 'graph'. The vector signal uses built-in hashed-feature embeddings (no external vector DB, no paid embedding API, no network) and is reported under `retrieval.vector` ({ backend: 'local-hashed', dimensions }); disable it with BASEMOUSE_VECTOR_RETRIEVAL=off.",
         "parameters": [
-          { "name": "q", "in": "query", "schema": { "type": "string", "maxLength": 256 } },
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 6 } },
-          { "name": "retrieval", "in": "query", "description": "Ranking mode. 'lexical' (default) or 'hybrid' (one-hop graph expansion + local hashed-vector signal, with signal explanations). Vectors are local/offline, not a paid embedding API or external vector DB.", "schema": { "type": "string", "enum": ["lexical", "hybrid"], "default": "lexical" } },
-          { "name": "type", "in": "query", "schema": { "type": "string" } },
-          { "name": "tag", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 256
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 6
+            }
+          },
+          {
+            "name": "retrieval",
+            "in": "query",
+            "description": "Ranking mode. 'lexical' (default) or 'hybrid' (one-hop graph expansion + local hashed-vector signal, with signal explanations). Vectors are local/offline, not a paid embedding API or external vector DB.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lexical",
+                "hybrid"
+              ],
+              "default": "lexical"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
         ],
-        "responses": { "200": { "description": "context_pack.v1 (top-level retrieval summary with vector backend when retrieval=hybrid; every entry carries a retrieval block, with vector/graph signals when retrieval=hybrid)" }, "400": { "description": "invalid_query / invalid_limit / invalid_filter / invalid_retrieval" }, "402": { "description": "quota_exceeded" }, "429": { "description": "rate_limited" } }
+        "responses": {
+          "200": {
+            "description": "context_pack.v1 (top-level retrieval summary with vector backend when retrieval=hybrid; every entry carries a retrieval block, with vector/graph signals when retrieval=hybrid)"
+          },
+          "400": {
+            "description": "invalid_query / invalid_limit / invalid_filter / invalid_retrieval"
+          },
+          "402": {
+            "description": "quota_exceeded"
+          },
+          "429": {
+            "description": "rate_limited"
+          }
+        }
       }
     },
     "/api/repository": {
       "get": {
         "summary": "List visible documents (paginated)",
         "parameters": [
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 100, "maximum": 500 } },
-          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 500
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
         ],
-        "responses": { "200": { "description": "count (total) + items (page)" } }
+        "responses": {
+          "200": {
+            "description": "count (total) + items (page)"
+          }
+        }
       }
     },
     "/api/documents": {
       "post": {
         "summary": "Create a document in your workspace",
-        "security": [{ "apiKey": [] }],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/json": { "schema": { "type": "object", "required": ["title", "body"], "properties": { "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" }, "title": { "type": "string" }, "body": { "type": "string" }, "type": { "type": "string", "default": "note" }, "tags": { "type": "array", "items": { "type": "string" } }, "links": { "type": "array", "items": { "type": "string" } } } } } }
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "title",
+                  "body"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]*$"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "body": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "default": "note"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "links": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
-        "responses": { "201": { "description": "created (version 1, or resurrected tombstone with continued version)" }, "401": { "description": "unauthorized" }, "402": { "description": "quota_exceeded / storage_quota_exceeded" }, "409": { "description": "duplicate_id" }, "413": { "description": "payload_too_large (256 KB cap)" } }
+        "responses": {
+          "201": {
+            "description": "created (version 1, or resurrected tombstone with continued version)"
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "402": {
+            "description": "quota_exceeded / storage_quota_exceeded"
+          },
+          "409": {
+            "description": "duplicate_id"
+          },
+          "413": {
+            "description": "payload_too_large (256 KB cap)"
+          }
+        }
       }
     },
     "/api/documents/{id}": {
       "put": {
-        "summary": "Update with optimistic locking",
-        "security": [{ "apiKey": [] }],
-        "description": "Requires expectedVersion (body) or If-Match (header) equal to the current version.",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "updated, version incremented" }, "404": { "description": "not_found" }, "409": { "description": "version_conflict (body carries currentVersion)" } }
+        "summary": "Update with optimistic locking, or idempotent upsert with ?mode=upsert",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "description": "Plain PUT requires expectedVersion (body) or If-Match (header) equal to the current version and replaces content authoritatively (including tag removal). With ?mode=upsert (design doc D9) no version is needed: 201 outcome:created when absent, 200 outcome:unchanged when content matches after normalization (no new revision), 200 outcome:updated otherwise; tags merge additively.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "upsert"
+              ]
+            },
+            "description": "Set to upsert for idempotent create-or-update without expectedVersion"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "updated, version incremented"
+          },
+          "404": {
+            "description": "not_found"
+          },
+          "409": {
+            "description": "Version conflict (plain PUT), or concurrent_write when an upsert exhausts its convergence retries (retryable)"
+          },
+          "201": {
+            "description": "Upsert created a new document (outcome: created)"
+          },
+          "400": {
+            "description": "Validation error — including expectedVersion/If-Match supplied with mode=upsert (incompatible), body id mismatch, or invalid fields"
+          },
+          "401": {
+            "description": "Writes require an API key"
+          }
+        }
       },
       "delete": {
         "summary": "Tombstone a document (history preserved)",
-        "security": [{ "apiKey": [] }],
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "tombstoned; frees document quota; storage/history retained" }, "404": { "description": "not_found" } }
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "tombstoned; frees document quota; storage/history retained"
+          },
+          "404": {
+            "description": "not_found"
+          }
+        }
+      },
+      "get": {
+        "summary": "Current revision of one document",
+        "description": "Scoped to the caller's visible workspaces (anonymous sees the public corpus). 404 when absent, tombstoned, or in another workspace.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The current document"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
       }
     },
     "/api/documents/{id}/history": {
       "get": {
         "summary": "Full append-only revision history",
-        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "every revision incl. tombstones, with snapshots" }, "404": { "description": "not_found" } }
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "every revision incl. tombstones, with snapshots"
+          },
+          "404": {
+            "description": "not_found"
+          }
+        }
       }
     },
     "/api/usage": {
       "get": {
         "summary": "Plan, documents, pack pulls, storage vs limits",
-        "security": [{ "apiKey": [] }],
-        "responses": { "200": { "description": "quota state — see it before a 402, not from it" }, "401": { "description": "unauthorized" } }
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "quota state — see it before a 402, not from it"
+          },
+          "401": {
+            "description": "unauthorized"
+          }
+        }
       }
     },
     "/api/keys/claim": {
       "post": {
         "summary": "Exchange a paid Stripe checkout session for an API key (shown exactly once)",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["sessionId"], "properties": { "sessionId": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "key issued — plaintext shown once" }, "403": { "description": "invalid_session" }, "409": { "description": "already_claimed" }, "503": { "description": "stripe_unavailable — payment safe, retry" } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "sessionId"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "key issued — plaintext shown once"
+          },
+          "403": {
+            "description": "invalid_session"
+          },
+          "409": {
+            "description": "already_claimed"
+          },
+          "503": {
+            "description": "stripe_unavailable — payment safe, retry"
+          }
+        }
       }
     },
     "/api/keys/rotate": {
       "post": {
         "summary": "Rotate your key (old key dies immediately, new shown once)",
-        "security": [{ "apiKey": [] }],
-        "responses": { "200": { "description": "new key" }, "401": { "description": "unauthorized" } }
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "new key"
+          },
+          "401": {
+            "description": "unauthorized"
+          }
+        }
       }
     },
     "/api/billing/portal": {
       "post": {
         "summary": "Stripe-hosted Billing Portal session (cancel, payment management)",
-        "security": [{ "apiKey": [] }],
-        "responses": { "200": { "description": "{ url }" }, "400": { "description": "key has no Stripe customer" } }
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ url }"
+          },
+          "400": {
+            "description": "key has no Stripe customer"
+          }
+        }
       }
     },
     "/mcp": {
       "post": {
         "summary": "MCP endpoint (JSON-RPC 2.0, stateless Streamable HTTP)",
-        "description": "Methods: initialize, tools/list, tools/call. Tools: search, get_context_pack. Same auth and metering as REST.",
-        "responses": { "200": { "description": "JSON-RPC response" }, "202": { "description": "notification acknowledged" } }
+        "description": "Methods: initialize, ping, tools/list, tools/call. Tools: search, get_context_pack, upsert_document (write; requires an authenticated key). Same auth and metering as REST.",
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response"
+          },
+          "202": {
+            "description": "notification acknowledged"
+          }
+        }
       }
     }
   }

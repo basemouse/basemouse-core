@@ -64,8 +64,8 @@ test('open-source CTA defaults to the real repo, never the stale demo, when no e
   const projected = publicBillingConfig(loadBillingConfig({}));
   const open = projected.tiers.find((tier) => tier.id === 'open');
   assert.equal(open.action, 'link');
-  assert.equal(open.actionUrl, 'https://github.com/basemouse/basemouse');
-  assert.equal(projected.openSourceUrl, 'https://github.com/basemouse/basemouse');
+  assert.equal(open.actionUrl, 'https://github.com/basemouse/basemouse-core');
+  assert.equal(projected.openSourceUrl, 'https://github.com/basemouse/basemouse-core');
   assert.doesNotMatch(open.actionUrl, /basemouse-demo/);
 });
 

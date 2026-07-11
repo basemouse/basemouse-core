@@ -1,0 +1,54 @@
+# BaseMouse Sync — composite GitHub Action.
+#
+# Pushes this repo's CLAUDE.md/PROGRESS.md to BaseMouse on every push, so sync
+# rides on `git push`: no daemon, no per-machine key, works from any OS/editor/
+# coding tool. The key lives once, as a repo/org secret.
+#
+# Usage (in the consuming repo, .github/workflows/basemouse-sync.yml):
+#
+#   name: basemouse-sync
+#   on:
+#     push:
+#       branches: [main]
+#       paths: ['CLAUDE.md', 'PROGRESS.md']
+#   jobs:
+#     sync:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - uses: actions/checkout@v6
+#         - uses: basemouse/basemouse-core/integrations/github-action@master
+#           with:
+#             api-key: ${{ secrets.BASEMOUSE_API_KEY }}
+#
+name: 'BaseMouse Sync'
+description: "Push this repo's CLAUDE.md/PROGRESS.md to BaseMouse as project-tagged, versioned documents"
+branding:
+  icon: 'upload-cloud'
+  color: 'gray-dark'
+
+inputs:
+  api-key:
+    description: 'BaseMouse API key (bm_...). Pass a secret, never a literal.'
+    required: true
+  base-url:
+    description: 'BaseMouse instance to push to'
+    required: false
+    default: 'https://basemouse.com'
+  slug:
+    description: 'Project slug override (defaults to the repository name)'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Sync repo docs to BaseMouse
+      shell: bash
+      env:
+        BASEMOUSE_API_KEY: ${{ inputs.api-key }}
+        BASEMOUSE_BASE_URL: ${{ inputs.base-url }}
+        SLUG: ${{ inputs.slug }}
+      run: |
+        # Default slug = repository name (without owner); the CLI sanitizes it.
+        slug="${SLUG:-${GITHUB_REPOSITORY##*/}}"
+        node "${GITHUB_ACTION_PATH}/../cli/basemouse.mjs" sync --single "$GITHUB_WORKSPACE" --slug "$slug"

@@ -25,9 +25,25 @@ async function check(name, fn) {
   }
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// GETs are idempotent, so retry transient network/timeout errors: a single
+// connection blip during a rollout (e.g. a first-request TLS reset before the
+// new pod is steady in the ingress) should not fail the whole deploy. Only
+// thrown errors (fetch failed / TimeoutError) are retried — an HTTP status is
+// returned as-is so a genuine 5xx still fails the check.
 const get = async (path, headers = {}) => {
-  const res = await fetch(`${base}${path}`, { headers, signal: AbortSignal.timeout(10_000) });
-  return res;
+  const attempts = 3;
+  let lastError;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fetch(`${base}${path}`, { headers, signal: AbortSignal.timeout(10_000) });
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts) await sleep(750 * attempt);
+    }
+  }
+  throw lastError;
 };
 
 await check('healthz', async () => {

@@ -62,7 +62,7 @@ function tierCard(tier, contactSalesUrl) {
       class: 'button secondary tier-cta',
       text: tier.actionLabel || 'View on GitHub',
       attrs: {
-        href: tier.actionUrl || 'https://github.com/basemouse/basemouse',
+        href: tier.actionUrl || 'https://github.com/basemouse/basemouse-core',
         rel: 'noopener'
       }
     });

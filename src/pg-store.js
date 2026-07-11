@@ -81,7 +81,26 @@ export class PgStore {
       connectionString: databaseUrl,
       max,
       connectionTimeoutMillis,
+      // Keep idle sockets alive through the Supabase pooler / NAT so they are not
+      // silently reaped between requests (root cause of "Connection terminated
+      // unexpectedly").
+      keepAlive: true,
       ssl: sslConfig(databaseUrl, env)
+    });
+    // When the pooler drops an IDLE backend (idle eviction, provider maintenance,
+    // a Supabase incident), node-postgres emits 'error' on the Pool itself — NOT
+    // from any query() call. Without a listener this is an unhandled EventEmitter
+    // 'error' and the process exits 1 (observed as an exit-code-1 pod restart).
+    // Swallow it here: the pool transparently opens a fresh connection on the next
+    // query, and in-flight failures are still mapped to StoreUnavailableError by
+    // query()/tx() for the seed-corpus degrade path.
+    this.pool.on('error', (error) => {
+      // Prefer a stable error code, fall back to the full error so a non-Error
+      // emission (or one missing code/message) still leaves a diagnosable trace.
+      console.error(
+        'pg pool idle-client error (non-fatal, connection will be recycled):',
+        (error && error.code) || error
+      );
     });
   }
 
@@ -201,13 +220,17 @@ export class PgStore {
         // Tombstone resurrection: version continues monotonically.
         record.version = existing.rows[0].version + 1;
         record.checksum = checksum(record);
+        // created_at is rewritten too: a resurrection is a fresh creation
+        // (the original timestamp lives on in the tombstoned revisions), and
+        // MemoryStore replaces the whole record — the two stores must agree
+        // and the row must match the createdAt the 201 response reports.
         await client.query(
           `UPDATE documents SET title=$3, type=$4, tags=$5, body=$6, links=$7,
-             version=$8, author=$9, updated_at=$10, checksum=$11, source=$12, deleted=false
+             version=$8, author=$9, created_at=$10, updated_at=$11, checksum=$12, source=$13, deleted=false
            WHERE workspace_id=$1 AND id=$2`,
           [workspaceId, doc.id, record.title, record.type, JSON.stringify(record.tags),
             record.body, JSON.stringify(record.links), record.version, record.author,
-            record.updatedAt, record.checksum, JSON.stringify(record.source)]
+            record.createdAt, record.updatedAt, record.checksum, JSON.stringify(record.source)]
         );
       } else {
         await client.query(
@@ -231,8 +254,15 @@ export class PgStore {
     });
   }
 
-  async updateDocument(workspaceId, id, fields, expectedVersion) {
+  async updateDocument(workspaceId, id, fields, expectedVersion, limits = null) {
     return this.tx(async (client) => {
+      // Lock keys before documents (same order as createDocument) so
+      // concurrent creates/updates on the same workspace can't deadlock.
+      let keyRow = null;
+      if (limits) {
+        const key = await client.query('SELECT storage_bytes FROM keys WHERE id=$1 FOR UPDATE', [workspaceId]);
+        keyRow = key.rows[0] || null;
+      }
       const existing = await client.query(
         'SELECT * FROM documents WHERE workspace_id=$1 AND id=$2 FOR UPDATE',
         [workspaceId, id]
@@ -251,6 +281,15 @@ export class PgStore {
         deleted: false
       };
       updated.checksum = checksum(updated);
+
+      // Storage accounting is a delta, not the new document's full size: an
+      // edit only costs (or frees) the difference from what it already
+      // occupied. Only a growing edit can be blocked by the quota.
+      const delta = docByteSize(updated) - docByteSize(rowToDoc(row));
+      if (keyRow && delta > 0 && Number(keyRow.storage_bytes) + delta > limits.maxStorageBytes) {
+        throw new StorageQuotaExceededError({ storageBytes: Number(keyRow.storage_bytes), maxStorageBytes: limits.maxStorageBytes });
+      }
+
       await client.query(
         `UPDATE documents SET title=$3, type=$4, tags=$5, body=$6, links=$7,
            version=$8, author=$9, updated_at=$10, checksum=$11
@@ -265,7 +304,7 @@ export class PgStore {
       );
       await client.query(
         'UPDATE keys SET storage_bytes = storage_bytes + $2 WHERE id = $1',
-        [workspaceId, docByteSize(updated)]
+        [workspaceId, delta]
       );
       return updated;
     });
@@ -291,10 +330,15 @@ export class PgStore {
         `INSERT INTO revisions (workspace_id, document_id, version, snapshot) VALUES ($1,$2,$3,$4)`,
         [workspaceId, id, version, JSON.stringify(tombstone)]
       );
-      // Tombstones free document quota immediately (storage stays — history is kept).
+      // Tombstones free BOTH document quota and the live doc's storage bytes.
+      // Storage meters live content (updateDocument already charges deltas,
+      // not full snapshots) — without this release, every delete+recreate
+      // cycle double-charged the same bytes and walked the workspace toward
+      // a spurious StorageQuotaExceededError. GREATEST guards the slight
+      // difference between create-time and delete-time size bases.
       await client.query(
-        'UPDATE keys SET doc_count = doc_count - 1 WHERE id = $1',
-        [workspaceId]
+        'UPDATE keys SET doc_count = doc_count - 1, storage_bytes = GREATEST(storage_bytes - $2, 0) WHERE id = $1',
+        [workspaceId, docByteSize(rowToDoc(row))]
       );
       return { id, version, deleted: true };
     });

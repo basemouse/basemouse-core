@@ -10,6 +10,7 @@ import { MemoryStore } from '../src/memory-store.js';
 import { loadBillingConfig } from '../src/billing.js';
 import { hashKey, generateKey } from '../src/auth.js';
 import { createRateLimiter } from '../src/rate-limit.js';
+import { rotateKeyHandler } from '../src/handlers/keys.js';
 
 const PAID_SESSION = {
   id: 'cs_paid_1',
@@ -177,6 +178,17 @@ test('rotate: old key dies immediately, new key works, shown once', async () => 
   claimedKey = body.key;
 });
 
+test('rotate: a race where the key vanishes between auth and rotation never claims success', async () => {
+  // rotateKeyHash contractually returns null when the key id no longer
+  // exists (or the update affected zero rows) — the handler must not hand
+  // out a new key in that case.
+  const vanishedStore = { rotateKeyHash: async () => null };
+  await assert.rejects(
+    rotateKeyHandler(vanishedStore, { keyId: 'ws-vanished' }),
+    /no longer valid/
+  );
+});
+
 test('billing portal: returns the hosted URL for stripe-linked keys; 400 for script-issued', async () => {
   const portal = await post('/api/billing/portal', {}, { Authorization: `Bearer ${claimedKey}` });
   assert.equal(portal.status, 200);
@@ -205,7 +217,9 @@ test('cancellation flow: read_only key reads and exports but cannot write', asyn
   assert.equal(write.status, 403);
   const writeBody = await write.json();
   assert.equal(writeBody.error, 'read_only_key');
-  assert.ok(writeBody.graceEndsAt !== undefined, 'body carries the grace context');
+  // graceEndsAt must be the actual end of the 90-day grace window, not the
+  // cancellation date itself (they are 90 days apart, not the same instant).
+  assert.equal(writeBody.graceEndsAt, '2026-09-09T00:00:00.000Z');
 });
 
 test('anonymous reads are rate-limited per IP (each anon hit is a paid query)', async () => {
@@ -222,6 +236,34 @@ test('anonymous reads are rate-limited per IP (each anon hit is a paid query)', 
     await fetch(`${tightBase}/api/search?q=x`);
     const limited = await fetch(`${tightBase}/api/search?q=x`);
     assert.equal(limited.status, 429);
+    assert.ok(limited.headers.get('retry-after'));
+  } finally {
+    await new Promise((resolve) => tightServer.close(resolve));
+  }
+});
+
+test('authenticated document writes are rate-limited per plan, same as reads', async () => {
+  const tightStore = new MemoryStore([]);
+  const tightKey = generateKey();
+  await tightStore.createKey({ id: 'ws-write-limit', plan: 'demo', keyHash: hashKey(tightKey) });
+  const tightServer = createApp(tightStore, {
+    seedCount: 0,
+    billing: loadBillingConfig({}),
+    planLimits: { ...TEST_LIMITS, demo: { ...TEST_LIMITS.demo, maxDocuments: 1000, requestsPerMinute: 2 } }
+  });
+  await new Promise((resolve) => tightServer.listen(0, '127.0.0.1', resolve));
+  const tightBase = `http://127.0.0.1:${tightServer.address().port}`;
+  const authed = { Authorization: `Bearer ${tightKey}`, 'Content-Type': 'application/json' };
+  const write = (id) => fetch(`${tightBase}/api/documents`, {
+    method: 'POST',
+    headers: authed,
+    body: JSON.stringify({ id, title: 't', body: 'b' })
+  });
+  try {
+    await write('rl-1');
+    await write('rl-2');
+    const limited = await write('rl-3');
+    assert.equal(limited.status, 429, 'document writes must be rate-limited exactly like read endpoints are');
     assert.ok(limited.headers.get('retry-after'));
   } finally {
     await new Promise((resolve) => tightServer.close(resolve));

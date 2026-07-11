@@ -69,6 +69,14 @@ test('repository endpoint returns count + items', async () => {
   assert.ok(body.items[0].checksum);
 });
 
+test('repository endpoint clamps an explicit limit=0 to the minimum of 1, not the default of 100', async () => {
+  const res = await fetch(`${base}/api/repository?limit=0`);
+  assert.equal(res.status, 200);
+  const body = await res.json();
+  assert.equal(body.limit, 1);
+  assert.equal(body.items.length, 1);
+});
+
 test('search requires a query and validates length', async () => {
   assert.equal((await fetch(`${base}/api/search`)).status, 400);
   const long = 'x'.repeat(300);

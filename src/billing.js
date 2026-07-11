@@ -89,7 +89,7 @@ const DEFAULT_CONTACT_SALES_URL =
 const DEFAULT_APP_BASE_URL = 'https://basemouse.com';
 // Where the open-core CTA points. A public URL (not a secret); env-overridable
 // so self-hosters can re-point it at their own fork/docs.
-const DEFAULT_OPEN_SOURCE_URL = 'https://github.com/basemouse/basemouse';
+const DEFAULT_OPEN_SOURCE_URL = 'https://github.com/basemouse/basemouse-core';
 
 // Build the server-side billing configuration from environment variables.
 // Pure with respect to its `env` argument so tests can pass a fixture object.

@@ -178,6 +178,31 @@ for (const backend of backends) {
       await assert.rejects(store.createDocument('ws-quota-contract', doc('too-big'), tinyStorage), /storage allowance/);
     });
 
+    await t.test('M2: storage allowance is delta-accounted on update, never the full new size', async () => {
+      const uws = 'ws-update-quota-contract';
+      await store.createKey({ id: uws, plan: 'demo', keyHash: hashKey('bm_' + '3'.repeat(48)) });
+      const created = await store.createDocument(uws, doc('update-quota', { body: 'x'.repeat(50) }));
+      const baseline = (await store.getUsage(uws, '2026-06')).storageBytes;
+
+      // Cap set just above current usage: a shrink must still succeed even
+      // though there is almost no headroom, and a large growth must be
+      // blocked — proving storage is tracked as a delta, not the new total.
+      const limits = { maxDocuments: 100, maxStorageBytes: baseline + 10 };
+
+      const shrunk = await store.updateDocument(uws, 'update-quota', { body: 'y' }, created.version, limits);
+      assert.equal(shrunk.version, 2);
+      const afterShrink = (await store.getUsage(uws, '2026-06')).storageBytes;
+      assert.ok(afterShrink < baseline, 'a shrinking edit must free storage, not add the full new document size');
+
+      await assert.rejects(
+        store.updateDocument(uws, 'update-quota', { body: 'z'.repeat(500) }, shrunk.version, limits),
+        /storage allowance/
+      );
+      const untouched = await store.getDocument([uws], 'update-quota');
+      assert.equal(untouched.version, 2, 'a rejected oversize update must never apply');
+      assert.equal((await store.getUsage(uws, '2026-06')).storageBytes, afterShrink, 'a rejected update must not move the counter');
+    });
+
     await t.test('M2: stripe event idempotency', async () => {
       assert.equal(await store.markStripeEvent('evt_contract_1', 100), true);
       assert.equal(await store.markStripeEvent('evt_contract_1', 100), false, 'duplicate is a no-op');

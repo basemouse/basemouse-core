@@ -10,7 +10,8 @@ import { createApp } from '../src/server.js';
 import { MemoryStore } from '../src/memory-store.js';
 import { createSeedRepository } from '../src/store.js';
 import { StoreUnavailableError } from '../src/errors.js';
-import { generateKey } from '../src/auth.js';
+import { generateKey, hashKey } from '../src/auth.js';
+import { currentMonth } from '../src/quota.js';
 
 const seeds = createSeedRepository();
 
@@ -81,6 +82,39 @@ test('writes during an outage are 503, never queued or dropped silently', async 
     body: JSON.stringify({ id: 'x', title: 'x', body: 'y' })
   });
   assert.equal(res.status, 503);
+});
+
+test('a load failure during context-pack never burns the plan quota (metered only after a successful load)', async () => {
+  const outageStore = new MemoryStore([]);
+  const testKey = generateKey();
+  await outageStore.createKey({ id: 'ws-outage', plan: 'demo', keyHash: hashKey(testKey) });
+
+  let recordPackPullCalls = 0;
+  const realRecordPackPull = outageStore.recordPackPull.bind(outageStore);
+  outageStore.recordPackPull = async (...args) => {
+    recordPackPullCalls += 1;
+    return realRecordPackPull(...args);
+  };
+  // Auth (findKeyByHash) succeeds, but the document load itself fails —
+  // e.g. a read replica down while the keys table is still reachable.
+  outageStore.listVisible = async () => {
+    throw new StoreUnavailableError(new Error('read replica down'));
+  };
+
+  const outageApp = createApp(outageStore, { seedCount: 0 });
+  await new Promise((resolve) => outageApp.listen(0, '127.0.0.1', resolve));
+  const outageBase = `http://127.0.0.1:${outageApp.address().port}`;
+  try {
+    const res = await fetch(`${outageBase}/api/context-pack?q=agent`, {
+      headers: { Authorization: `Bearer ${testKey}` }
+    });
+    assert.equal(res.status, 503);
+    assert.equal(recordPackPullCalls, 0, 'a pack that was never delivered must never be metered');
+    const usage = await outageStore.getUsage('ws-outage', currentMonth());
+    assert.equal(usage.packPulls, 0);
+  } finally {
+    await new Promise((resolve) => outageApp.close(resolve));
+  }
 });
 
 test('/readyz reports ready (200) with degraded:true so the demo pod stays in the Service', async () => {

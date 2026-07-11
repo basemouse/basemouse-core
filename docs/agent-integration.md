@@ -33,7 +33,30 @@ const pack = await getContextPack("agent context", 3);
 console.log(pack.entryCount, "of", pack.totalMatches, "matches");
 ```
 
-Retrieval is lexical keyword scoring, so `relevance.score` and `relevance.matchedTerms` tell you why each entry matched. Use `type` and `tag` to narrow. When `truncated` is `true`, `totalMatches` exceeds what you received, so raise `limit` or refine `q` if you need more.
+Retrieval is lexical keyword scoring by default, so `relevance.score` and `relevance.matchedTerms` tell you why each entry matched; pass `retrieval=hybrid` to blend in one-hop graph expansion and local vector similarity (each result then explains its per-signal contribution). Use `type` and `tag` to narrow — `tag=project:<slug>` scopes a pack to one project. When `truncated` is `true`, `totalMatches` exceeds what you received, so raise `limit` or refine `q` if you need more.
+
+## Or skip the HTTP glue: connect over MCP
+
+If your agent runtime speaks the Model Context Protocol (Claude Code, Cursor,
+Windsurf, Codex CLI, Gemini CLI, and most agent frameworks via an MCP client),
+you don't need to hand-roll the fetch at all: BaseMouse serves the same
+capabilities as MCP tools — `search`, `get_context_pack`, and
+`upsert_document` (a write tool: agents persist decisions or session context
+by stable id, idempotently — unchanged content writes nothing and every real
+change lands in the append-only history) — at
+`POST https://basemouse.com/mcp` (stateless JSON-RPC over Streamable HTTP),
+with the same auth, scoping, and quota metering as REST. Claude Code:
+
+```bash
+claude mcp add --scope user --transport http basemouse https://basemouse.com/mcp \
+  --header "Authorization: Bearer bm_..."
+```
+
+For other tools, `node integrations/cli/basemouse.mjs register` prints
+ready-to-paste config per client. Omit the auth header to browse the public
+demo corpus. Everything below (prompt templates, citation rules, governance)
+applies identically — an MCP `get_context_pack` call returns the same
+`basemouse.context_pack.v1` JSON.
 
 ## System prompt template
 

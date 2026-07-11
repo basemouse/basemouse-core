@@ -17,6 +17,7 @@
 
 import Stripe from 'stripe';
 import { WebhookSignatureError } from '../errors.js';
+import { findTier } from '../billing.js';
 
 // constructEvent is pure crypto — the api key is never used for network calls
 // here, so a placeholder keeps the verifier constructible without secrets.
@@ -55,10 +56,13 @@ export async function stripeWebhookHandler(store, billing, rawBody, signatureHea
     case 'checkout.session.completed': {
       const session = event.data.object;
       if (session.payment_status !== 'paid' || !session.customer) break;
+      // Same plan-derivation rule as claimKeyHandler: validate against the
+      // configured tiers rather than trusting client_reference_id verbatim.
+      const tier = findTier(billing, session.client_reference_id);
       await store.upsertPendingKey({
         customerId: typeof session.customer === 'string' ? session.customer : session.customer.id,
         subscriptionId: typeof session.subscription === 'string' ? session.subscription : session.subscription?.id || null,
-        plan: session.client_reference_id || 'starter',
+        plan: tier ? tier.id : 'starter',
         eventCreated: event.created
       });
       break;
@@ -67,13 +71,18 @@ export async function stripeWebhookHandler(store, billing, rawBody, signatureHea
       const subscription = event.data.object;
       const customerId = typeof subscription.customer === 'string' ? subscription.customer : subscription.customer?.id;
       if (!customerId) break;
-      const cancelled = subscription.status === 'canceled' || subscription.cancel_at_period_end === true;
-      // An active subscription update REACTIVATES a read_only key (e.g. the
-      // customer un-cancels in the Billing Portal) — and clears cancelled_at.
+      // Only 'active'/'trialing' are good standing. Anything else — past_due,
+      // unpaid, incomplete_expired, canceled, paused — must go read_only, not
+      // just an explicit 'canceled' status.
+      const goodStanding = (subscription.status === 'active' || subscription.status === 'trialing')
+        && subscription.cancel_at_period_end !== true;
+      // A subscription update back to good standing REACTIVATES a read_only
+      // key (e.g. the customer un-cancels, or a failed payment is retried) —
+      // and clears cancelled_at.
       await store.updateSubscriptionState(customerId, {
         plan: planFromSubscription(subscription),
-        status: cancelled ? 'read_only' : 'active',
-        cancelledAt: cancelled ? new Date(event.created * 1000).toISOString() : undefined,
+        status: goodStanding ? 'active' : 'read_only',
+        cancelledAt: goodStanding ? undefined : new Date(event.created * 1000).toISOString(),
         eventCreated: event.created
       });
       break;

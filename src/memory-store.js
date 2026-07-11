@@ -150,7 +150,7 @@ export class MemoryStore {
     return structuredClone(record);
   }
 
-  async updateDocument(workspaceId, id, fields, expectedVersion) {
+  async updateDocument(workspaceId, id, fields, expectedVersion, limits = null) {
     const ws = this.workspace(workspaceId);
     const existing = ws.get(id);
     if (!existing || existing.deleted) throw new DocumentNotFoundError(id);
@@ -166,8 +166,20 @@ export class MemoryStore {
       deleted: false
     };
     updated.checksum = checksum(updated);
+
+    const key = this.keys.get(workspaceId);
+    // Storage accounting is a delta, not the new document's full size: an
+    // edit only costs (or frees) the difference from what it already
+    // occupied. Only a growing edit can be blocked by the quota.
+    const delta = Buffer.byteLength(JSON.stringify(updated), 'utf8')
+      - Buffer.byteLength(JSON.stringify(existing), 'utf8');
+    if (limits && key && delta > 0 && key.storageBytes + delta > limits.maxStorageBytes) {
+      throw new StorageQuotaExceededError({ storageBytes: key.storageBytes, maxStorageBytes: limits.maxStorageBytes });
+    }
+
     ws.set(id, updated);
     this.appendRevision(workspaceId, updated);
+    if (key) key.storageBytes = Math.max(0, key.storageBytes + delta);
     return structuredClone(updated);
   }
 
@@ -184,9 +196,16 @@ export class MemoryStore {
     };
     ws.set(id, tombstone);
     this.appendRevision(workspaceId, tombstone);
-    // Tombstones free document quota immediately; storage stays (history kept).
+    // Tombstones free BOTH document quota and the live doc's storage bytes.
+    // Storage meters live content (updateDocument charges deltas, not full
+    // snapshots) — without this release, every delete+recreate cycle
+    // double-charged the same bytes. Math.max guards the slight difference
+    // between the create-time and delete-time size bases.
     const key = this.keys.get(workspaceId);
-    if (key) key.docCount = Math.max(0, key.docCount - 1);
+    if (key) {
+      key.docCount = Math.max(0, key.docCount - 1);
+      key.storageBytes = Math.max(0, key.storageBytes - Buffer.byteLength(JSON.stringify(existing), 'utf8'));
+    }
     return { id, version: tombstone.version, deleted: true };
   }
 
