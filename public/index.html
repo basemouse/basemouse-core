@@ -229,8 +229,20 @@
               and your own docs need one header. See <a href="#api">the API section</a> for the
               exact request and response. Prefer a native connection? BaseMouse speaks the Model
               Context Protocol at <code>POST /mcp</code>, so agents like Claude Code, Cursor,
-              Codex CLI, Gemini CLI, and Grok CLI connect directly — same <code>search</code> and
-              <code>get_context_pack</code> tools, same auth and quota.
+              Codex CLI, Gemini CLI, and Grok CLI connect directly — the same
+              <code>search</code> and <code>get_context_pack</code> tools, plus
+              <code>upsert_document</code> so an agent can <b>write its own decisions back</b>
+              (idempotently — unchanged content writes nothing), same auth and quota.
+            </p>
+          </details>
+          <details>
+            <summary>Can agents write to it, or only read?</summary>
+            <p>
+              Both. Reading is the common case — grounded, cited context packs — but agents can
+              also persist notes and decisions by stable id via the API (<code>?mode=upsert</code>)
+              or the <code>upsert_document</code> MCP tool. Every write is a versioned, append-only
+              revision, so it doubles as durable agent memory across sessions without ever losing
+              history.
             </p>
           </details>
         </section>
