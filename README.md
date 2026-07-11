@@ -141,6 +141,12 @@ emits.)
 
 ### Sync your workspace (any platform, any coding tool)
 
+> New here? **[docs/getting-started.md](docs/getting-started.md)** maps your
+> situation to the right import path (coding workspace vs. any Markdown folder
+> vs. GitHub repo) — the `sync` CLI below is tailored to the AI-coding-workspace
+> layout (`CLAUDE.md`/`PROGRESS.md` per project); for arbitrary Markdown use
+> `scripts/import.mjs` instead.
+
 `integrations/cli/basemouse.mjs` is a zero-dependency Node CLI that keeps a
 projects workspace synced into BaseMouse as `project:<slug>`-tagged, versioned
 documents. Node-only — no bash/curl/jq — so it behaves identically on
