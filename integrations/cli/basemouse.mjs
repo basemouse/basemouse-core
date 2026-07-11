@@ -11,7 +11,7 @@
 //                                      the mode the GitHub Action uses
 //   basemouse watch                    reconcile once, then auto-push on save
 //   basemouse register [tool]          MCP config for claude|cursor|windsurf|
-//                                      codex|gemini (no arg: print all)
+//                                      codex|gemini|grok (no arg: print all)
 //   basemouse snippet [slug]           the CLAUDE.md "Context retrieval" block
 //
 // Env: BASEMOUSE_API_KEY (required for sync/watch; sync/watch never place it
@@ -379,6 +379,20 @@ function registerSnippets() {
       // Verified against Gemini CLI (requires the server to answer MCP ping).
       file: 'run this command',
       snippet: `gemini mcp add -s user -t http basemouse ${url} \\\n  -H "Authorization: ${auth}"`
+    },
+    grok: {
+      // Verified against Superagent's grok-cli source (src/utils/settings.ts,
+      // src/mcp/{runtime,validate}.ts): remote servers use transport "http",
+      // a url, and a headers map, stored under mcp.servers[] in the settings
+      // file. Or add it interactively in the TUI with /mcps.
+      file: '~/.grok/user-settings.json (or run /mcps in the TUI)',
+      snippet: JSON.stringify({
+        mcp: {
+          servers: [
+            { id: 'basemouse', label: 'BaseMouse', enabled: true, transport: 'http', url, headers: { Authorization: auth } }
+          ]
+        }
+      }, null, 2)
     }
   };
 }
@@ -476,7 +490,7 @@ usage:
   node basemouse.mjs sync [--base-dir DIR] [--only NAME]     sync a workspace of projects
   node basemouse.mjs sync --single [DIR] [--slug NAME]       sync one project directory
   node basemouse.mjs watch [--base-dir DIR] [--debounce MS]  reconcile, then auto-sync on save
-  node basemouse.mjs register [claude|cursor|windsurf|codex|gemini]
+  node basemouse.mjs register [claude|cursor|windsurf|codex|gemini|grok]
   node basemouse.mjs snippet [slug]                          CLAUDE.md context-retrieval block
 
 env: BASEMOUSE_API_KEY (required for sync/watch), BASEMOUSE_BASE_URL, BASE_DIR`;

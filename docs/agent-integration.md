@@ -38,7 +38,7 @@ Retrieval is lexical keyword scoring by default, so `relevance.score` and `relev
 ## Or skip the HTTP glue: connect over MCP
 
 If your agent runtime speaks the Model Context Protocol (Claude Code, Cursor,
-Windsurf, Codex CLI, Gemini CLI, and most agent frameworks via an MCP client),
+Windsurf, Codex CLI, Gemini CLI, Grok CLI, and most agent frameworks via an MCP client),
 you don't need to hand-roll the fetch at all: BaseMouse serves the same
 capabilities as MCP tools — `search`, `get_context_pack`, and
 `upsert_document` (a write tool: agents persist decisions or session context
