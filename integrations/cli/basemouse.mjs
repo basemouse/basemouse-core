@@ -381,18 +381,13 @@ function registerSnippets() {
       snippet: `gemini mcp add -s user -t http basemouse ${url} \\\n  -H "Authorization: ${auth}"`
     },
     grok: {
-      // Verified against Superagent's grok-cli source (src/utils/settings.ts,
-      // src/mcp/{runtime,validate}.ts): remote servers use transport "http",
-      // a url, and a headers map, stored under mcp.servers[] in the settings
-      // file. Or add it interactively in the TUI with /mcps.
-      file: '~/.grok/user-settings.json (or run /mcps in the TUI)',
-      snippet: JSON.stringify({
-        mcp: {
-          servers: [
-            { id: 'basemouse', label: 'BaseMouse', enabled: true, transport: 'http', url, headers: { Authorization: auth } }
-          ]
-        }
-      }, null, 2)
+      // Verified end-to-end against Grok Build (xAI's `grok` CLI, config in
+      // ~/.grok/config.toml): `grok mcp doctor` → handshake OK, 3 tools
+      // discovered. Grok Build takes an add-command like Claude/Gemini.
+      // (Note: Superagent's separate community grok-cli instead uses a JSON
+      // mcp.servers[] block in ~/.grok/user-settings.json — different tool.)
+      file: 'run this command',
+      snippet: `grok mcp add basemouse ${url} -t http -s user \\\n  -H "Authorization: ${auth}"`
     }
   };
 }
