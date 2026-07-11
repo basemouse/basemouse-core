@@ -12,7 +12,9 @@
     "eval:retrieval": "node scripts/evaluate-retrieval.mjs --cases data/retrieval-eval/golden-seed.json --retrieval hybrid",
     "eval:retrieval:demo": "node scripts/evaluate-retrieval.mjs --corpus data/demo-corpus/agent-governance.json --cases data/retrieval-eval/agent-governance-demo.json --retrieval hybrid",
     "claude:loop": "node scripts/claude-improve-loop.mjs",
-    "test:pg": "node --test"
+    "test:pg": "node --test",
+    "eval:retrieval:workspace": "node scripts/export-corpus.mjs data/retrieval-eval/local/workspace-corpus.json && node scripts/evaluate-retrieval.mjs --corpus data/retrieval-eval/local/workspace-corpus.json --cases data/retrieval-eval/local/workspace-projects.json --retrieval hybrid",
+    "eval:retrieval:workspace:paraphrase": "node scripts/export-corpus.mjs data/retrieval-eval/local/workspace-corpus.json && node scripts/evaluate-retrieval.mjs --corpus data/retrieval-eval/local/workspace-corpus.json --cases data/retrieval-eval/local/workspace-paraphrase.json --retrieval hybrid --min-recall 0"
   },
   "engines": {
     "node": ">=24"

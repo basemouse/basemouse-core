@@ -91,6 +91,9 @@ async function api(method, path, body, { retries = 2 } = {}) {
       continue;
     }
     if (res.status === 429 && attempt < retries) {
+      // Consume the body before retrying — an unread body pins the pooled
+      // keep-alive connection under Node's fetch until GC reaps it.
+      await res.text().catch(() => {});
       const after = Number(res.headers.get('retry-after'));
       await sleep(Math.min((Number.isFinite(after) && after > 0 ? after : 2) * 1000, 30_000));
       continue;
@@ -117,6 +120,21 @@ function requireKey() {
   if (!API_KEY) {
     console.error('BASEMOUSE_API_KEY env var is required (never pass keys as arguments).');
     process.exit(1);
+  }
+}
+
+// Statuses that doom the WHOLE run (bad/revoked key, exhausted quota,
+// read-only key): retrying the next doc with the same key is guaranteed
+// waste, and watch mode would otherwise re-warn forever on every save.
+class FatalKeyError extends Error {
+  constructor(status, body) {
+    const reason = {
+      401: 'the API key is missing, malformed, or revoked',
+      402: 'the plan quota is exhausted',
+      403: 'the key is read-only (cancelled plan)'
+    }[status] ?? `workspace-fatal HTTP ${status}`;
+    super(`${reason} — ${body}`);
+    this.status = status;
   }
 }
 
@@ -156,13 +174,29 @@ async function syncDoc(slug, fileName, filePath, counts) {
     const res = await api('PUT', `/api/documents/${docId}?mode=upsert`, doc);
     if ((res.status === 200 || res.status === 201) && res.json?.outcome) {
       const { outcome, document } = res.json;
-      const pad = { created: 'created  ', unchanged: 'unchanged', updated: 'updated  ' }[outcome] ?? outcome;
-      log(`  ${pad} ${docId} (v${document.version})`);
-      counts[outcome] += 1;
+      log(`  ${outcome.padEnd(9)} ${docId} (v${document.version})`);
+      if (outcome in counts) {
+        counts[outcome] += 1;
+      } else {
+        // A divergent/newer server sent an outcome we don't know — count it
+        // as failed rather than letting it vanish from the summary and the
+        // exit-code gate (counts[unknown] would be NaN on a phantom key).
+        warn(`${docId}: unknown outcome "${outcome}" from server — counted as failed`);
+        counts.failed += 1;
+      }
       return;
+    }
+    // Bad key / exhausted quota / read-only key dooms every subsequent write —
+    // abort the run with one clear error instead of warning once per doc.
+    if (res.status === 401 || res.status === 402 || res.status === 403) {
+      throw new FatalKeyError(res.status, detail(res));
     }
     if (res.status === 400 && /expectedVersion/.test(res.json?.message ?? '')) {
       // A pre-D9 server routed ?mode=upsert to the plain optimistic-lock PUT.
+      // (Prose-coupled detection: this CLI never sends a version precondition,
+      // so on current servers this 400 text is unreachable — it can only mean
+      // an old server. A machine-readable capability signal is the better fix
+      // once the server exposes one.)
       warn(`${docId}: this server predates upsert support — upgrade basemouse-core (or pin an older CLI); skipped`);
       counts.failed += 1;
       return;
@@ -170,6 +204,7 @@ async function syncDoc(slug, fileName, filePath, counts) {
     warn(`upsert ${docId} returned HTTP ${res.status} — ${detail(res)}`);
     counts.failed += 1;
   } catch (error) {
+    if (error instanceof FatalKeyError) throw error; // whole-run failure, not per-doc
     // Transient network/timeout after retries: per-doc WARN, never abort the run.
     warn(`${docId}: ${error.message} — skipped`);
     counts.failed += 1;
@@ -222,14 +257,21 @@ async function cmdSync(values, positionals) {
   requireKey();
   const counts = newCounts();
 
-  if (values.single) {
-    const dir = resolve(positionals[0] || '.');
-    log(`== syncing project ${dir} ==`);
-    await syncProject(dir, counts, values.slug ? slugify(values.slug) : undefined);
-  } else {
-    const baseDir = resolve(values['base-dir'] || process.env.BASE_DIR || join(homedir(), 'projects'));
-    log(`== syncing workspace ${baseDir} ==`);
-    await syncWorkspace(baseDir, counts, { only: values.only });
+  try {
+    if (values.single) {
+      const dir = resolve(positionals[0] || '.');
+      log(`== syncing project ${dir} ==`);
+      await syncProject(dir, counts, values.slug ? slugify(values.slug) : undefined);
+    } else {
+      const baseDir = resolve(values['base-dir'] || process.env.BASE_DIR || join(homedir(), 'projects'));
+      log(`== syncing workspace ${baseDir} ==`);
+      await syncWorkspace(baseDir, counts, { only: values.only });
+    }
+  } catch (error) {
+    if (!(error instanceof FatalKeyError)) throw error;
+    console.error(`\nFATAL: ${error.message}`);
+    console.error('Aborting — every remaining write would fail the same way.');
+    process.exit(1);
   }
 
   summarize(counts);
@@ -250,11 +292,22 @@ async function cmdWatch(values) {
     process.exit(1);
   }
 
+  // A dead key never heals — exiting beats re-warning on every save forever.
+  const dieIfFatal = (error) => {
+    if (!(error instanceof FatalKeyError)) return false;
+    console.error(`[watch] FATAL: ${error.message} — stopping (a dead key will not recover).`);
+    process.exit(1);
+  };
+
   // Reconcile first: edits made while the watcher was down would otherwise
   // never sync until the file happens to be saved again.
   log(`[watch] initial sync of ${baseDir}…`);
   const initial = newCounts();
-  await syncWorkspace(baseDir, initial);
+  try {
+    await syncWorkspace(baseDir, initial);
+  } catch (error) {
+    if (!dieIfFatal(error)) throw error;
+  }
   log(`[watch] initial sync: ${initial.created} created, ${initial.updated} updated, ${initial.unchanged} unchanged, ${initial.skipped} skipped, ${initial.failed} failed`);
 
   const pending = new Map(); // project name -> timer
@@ -269,6 +322,7 @@ async function cmdWatch(values) {
     try {
       await syncProject(join(baseDir, name), counts);
     } catch (error) {
+      dieIfFatal(error);
       warn(`[watch] ${name}: ${error.message}`);
     }
     running = false;

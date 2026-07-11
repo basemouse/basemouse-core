@@ -11,3 +11,9 @@ coverage/
 
 # Per-developer session log (imported into BaseMouse from disk; not a shared artifact)
 /PROGRESS.md
+
+# Private real-corpus eval material. The corpus file is regenerable via
+# scripts/export-corpus.mjs; the golden-query files (workspace-projects.json,
+# workspace-paraphrase.json) are HAND-AUTHORED and NOT regenerable — back
+# them up before deleting anything in this directory.
+data/retrieval-eval/local/

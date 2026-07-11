@@ -252,6 +252,15 @@ test('upsert: create → unchanged → updated, with server-owned comparison', a
   const history = await (await fetch(`${base}/api/documents/ups-doc/history`, { headers: authed(KEY_A) })).json();
   assert.equal(history.revisions, 1, 'unchanged upsert must not grow the append-only history');
 
+  // BOM (U+FEFF) and NBSP (U+00A0) are part of JS String.prototype.trim()'s
+  // whitespace class — pin that the comparison keeps NATIVE trim semantics.
+  // Files saved with a BOM (default for several Windows editors) must stay
+  // 'unchanged', or every sync grows the append-only history forever. (This
+  // pin used to live in the CLI's docsMatch test, deleted with the #20
+  // migration; the server owns the compare now, so the pin lives here.)
+  const bom = await put({ title: 'Upsert Doc', body: '\uFEFFfirst\u00A0', tags: ['project:x'] });
+  assert.equal((await bom.json()).outcome, 'unchanged', 'BOM/NBSP-edged content must compare equal');
+
   const changed = await put({ title: 'Upsert Doc', body: 'second', tags: ['project:x'] });
   assert.equal(changed.status, 200);
   const u = await changed.json();
