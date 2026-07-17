@@ -51,7 +51,8 @@ const contentTypes = {
   '.svg': 'image/svg+xml; charset=utf-8',
   '.ico': 'image/x-icon',
   '.png': 'image/png',
-  '.txt': 'text/plain; charset=utf-8'
+  '.txt': 'text/plain; charset=utf-8',
+  '.xml': 'application/xml; charset=utf-8'
 };
 
 const SECURITY_HEADERS = {

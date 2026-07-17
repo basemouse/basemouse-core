@@ -59,6 +59,9 @@ function renderIntroLine(parts) {
 }
 
 async function playIntro() {
+  // app.js is shared across pages; only the hero page has the terminal.
+  // Bail cleanly on pages without it instead of dereferencing a null node.
+  if (!termLog) return;
   const played = sessionStorage.getItem('bm-intro-played');
   if (reducedMotion || played) {
     INTRO.forEach(renderIntroLine);
