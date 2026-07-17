@@ -98,8 +98,14 @@ async function sendStatic(res, pathname) {
   if (!resolved.ok) {
     return sendJson(res, resolved.status, resolved.payload);
   }
-  const { filePath } = resolved;
-  const info = await stat(filePath).catch(() => null);
+  let { filePath } = resolved;
+  let info = await stat(filePath).catch(() => null);
+  // Directory requests (e.g. /blog/) serve that directory's index.html. The
+  // path is already contained in PUBLIC_DIR, so joining index.html stays inside.
+  if (info && info.isDirectory()) {
+    filePath = join(filePath, 'index.html');
+    info = await stat(filePath).catch(() => null);
+  }
   if (!info || !info.isFile()) {
     return sendJson(res, 404, { error: 'not_found' });
   }

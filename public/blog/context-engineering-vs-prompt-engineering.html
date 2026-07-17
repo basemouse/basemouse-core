@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Context Engineering vs Prompt Engineering: What's the Difference? — BaseMouse</title>
+    <meta name="description" content="Prompt engineering shapes one instruction. Context engineering manages everything the model sees across a task. Here is the difference, when each matters, and why context wins at scale." />
+    <link rel="canonical" href="https://basemouse.com/blog/context-engineering-vs-prompt-engineering.html" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b09" />
+    <meta property="og:title" content="Context Engineering vs Prompt Engineering: What's the Difference?" />
+    <meta property="og:description" content="Prompt engineering shapes one instruction. Context engineering manages everything the model sees across a task." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://basemouse.com/blog/context-engineering-vs-prompt-engineering.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is context engineering better than prompt engineering?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "They are not competitors. Context engineering is the larger discipline and prompt engineering is one part of it. For single-turn tasks a good prompt is enough; for agents and multi-step systems, context engineering is what makes them reliable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is replacing prompt engineering?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nothing is replacing it outright; it is being absorbed. Prompt engineering is now one component of context engineering, which manages the full set of tokens a model sees rather than just the instruction."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the four pillars of context engineering?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Selecting the right context, structuring it so the model can parse it, compressing it to stay within the attention budget, and isolating durable instructions from transient data."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is an example of context engineering?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A support agent that retrieves relevant policy docs, formats them as structured snippets, summarizes the prior conversation, keeps the system policy separate from the user's message, and answers with a citation to the exact policy version it used."
+      }
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BaseMouse home">
+          <svg class="logo-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false">
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="#121310" />
+            <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+            <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+            <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+            <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+          </svg>
+          <span>BASE<b>MOUSE</b></span>
+        </a>
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="/">home</a>
+          <a href="/blog/context-layer-for-ai-agents.html">context layer</a>
+          <a href="https://github.com/basemouse/basemouse-core">docs</a>
+        </nav>
+        <a class="btn primary topbar-cta" href="/">Get your key</a>
+      </header>
+
+      <main id="main" class="legal-body">
+        <p class="spec-strip"><span>GUIDE</span><span>CONTEXT ENGINEERING</span><span>REV: <b>2026-07</b></span></p>
+        <h1>Context Engineering vs Prompt Engineering: What's the Difference?</h1>
+
+        <div class="draft-note">
+          <b>Short answer:</b> Prompt engineering is about how you phrase a single instruction. Context engineering is about everything the model sees at runtime, instructions, retrieved documents, memory, and tool outputs, across many steps. Prompt engineering is a subset of context engineering, and as AI moves from one-shot chat to multi-step agents, context is where reliability is won or lost.
+        </div>
+
+        <h2>What is prompt engineering?</h2>
+        <p>Prompt engineering is the craft of writing the instruction you hand a model for a single turn: the wording, the role, the tone, the constraints, the few-shot examples. It is model-centric. You are tuning how you ask so the model answers the way you want.</p>
+        <p>It works well for bounded, single-turn tasks: summarize this, classify that, rewrite this in a friendlier tone. When prompt engineering fails, the symptom is stylistic. The output tone is off, or the model ignores a formatting rule.</p>
+
+        <h2>What is context engineering?</h2>
+        <p>Context engineering is the discipline of curating and managing the entire information environment a model operates in, across multiple steps, tools, and sessions. That includes the system prompt, the user's request, conversation history, documents retrieved via RAG, tool results, and long-term memory.</p>
+        <p>It is architecture-centric. The question shifts from "How should I phrase this?" to "What does the model need to know right now, and what should I leave out?" When context engineering fails, the symptom is worse than a bad tone: hallucinations, context rot (the model loses track of earlier facts as the window fills with noise), or an agent that forgets its goal halfway through a task.</p>
+
+        <h2>Context engineering vs prompt engineering: side by side</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th></th><th>Prompt engineering</th><th>Context engineering</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>Core question</b></td><td>"How should I phrase this instruction?"</td><td>"What does the model need to know right now?"</td></tr>
+              <tr><td><b>Scope</b></td><td>Single turn</td><td>Multi-step, multi-session</td></tr>
+              <tr><td><b>Data</b></td><td>Static, written at request time</td><td>Dynamic: memory, RAG, tool outputs, changing per step</td></tr>
+              <tr><td><b>System view</b></td><td>Model-centric, tune the words</td><td>Architecture-centric, manage retrieval, state, and what to drop</td></tr>
+              <tr><td><b>Main lever</b></td><td>Wording, examples, constraints</td><td>Selection, compression, ordering, provenance</td></tr>
+              <tr><td><b>When it fails</b></td><td>Wrong tone, ignored formatting</td><td>Hallucination, context rot, lost goals</td></tr>
+              <tr><td><b>Best for</b></td><td>One-shot tasks (summarize, classify, rewrite)</td><td>Agents, RAG apps, long-running workflows</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Is prompt engineering dead?</h2>
+        <p>No, but it is no longer the whole job. Prompt engineering is now a critical subset of context engineering. You can write a brilliant prompt, but if it is buried under thousands of tokens of noisy chat history and half-relevant retrieved documents, the model will not follow it. The prompt still matters. It is just one input among many that context engineering orchestrates.</p>
+
+        <h2>The four pillars of context engineering</h2>
+        <p>Most practitioners describe context engineering as four jobs done at every step:</p>
+        <ul>
+          <li><b>Select.</b> Pull the right facts, history, and instructions into the window. This is where RAG and retrieval quality live.</li>
+          <li><b>Structure.</b> Format the data so the model can parse it: clean JSON, extractions, summaries.</li>
+          <li><b>Compress.</b> Summarize past actions and prune irrelevant history so you stay inside the model's attention budget.</li>
+          <li><b>Isolate.</b> Separate durable instructions (role, policy) from transient data (this request's inputs) so they do not bleed together.</li>
+        </ul>
+
+        <h2>When to use which</h2>
+        <ul>
+          <li><b>Reach for prompt engineering</b> when the task is bounded and single-turn, and the model already has everything it needs in front of it.</li>
+          <li><b>Reach for context engineering</b> the moment you build an agent, a RAG app, or anything that loops, calls tools, or runs across sessions, because now what the model sees changes every step, and managing that is the whole game.</li>
+        </ul>
+
+        <h2>The part most guides skip: provenance</h2>
+        <p>Selection, compression, and structure get most of the attention. But the failure mode that actually hurts in production is untraceable context: the model asserts something and you cannot tell which document it came from, which version, or whether it is still true.</p>
+        <p>Context engineering is not just about fitting the right tokens in the window. It is about feeding the model context you can audit: every claim tied to a source, every source tied to a version and a checksum. That is how you turn "the agent said so" into "the agent said so, and here is the cited, versioned document it read." When an agent's answer is wrong, provenance is the difference between a five-minute fix and an afternoon of guessing.</p>
+        <p>This is exactly what <a href="/">BaseMouse</a> does: it serves cited, checksummed, versioned context packs from your own documents, so the context you engineer into the window is grounded and traceable by construction.</p>
+
+        <h2>FAQ</h2>
+        <h3>Is context engineering better than prompt engineering?</h3>
+        <p>They are not competitors. Context engineering is the larger discipline and prompt engineering is one part of it. For single-turn tasks, a good prompt is enough. For agents and multi-step systems, context engineering is what makes them reliable.</p>
+        <h3>What is replacing prompt engineering?</h3>
+        <p>Nothing is replacing it outright; it is being absorbed. Prompt engineering is now one component of context engineering, which manages the full set of tokens a model sees rather than just the instruction.</p>
+        <h3>What are the four pillars of context engineering?</h3>
+        <p>Selecting the right context, structuring it so the model can parse it, compressing it to stay within the attention budget, and isolating durable instructions from transient data.</p>
+        <h3>What is an example of context engineering?</h3>
+        <p>A support agent that, for each user question, retrieves the relevant policy docs (select), formats them as structured snippets (structure), summarizes the prior conversation (compress), and keeps the system policy separate from the user's message (isolate), then answers with a citation to the exact policy version it used.</p>
+      </main>
+
+      <footer class="colophon">
+        <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
+        <span class="colophon-mid"><a href="/">home</a> · <a href="/blog/context-layer-for-ai-agents.html">context layer</a> · <a href="https://github.com/basemouse/basemouse-core">repo</a></span>
+        <span>NO BLACK BOXES. NO SILENT EDITS.</span>
+      </footer>
+    </div>
+  </body>
+</html>

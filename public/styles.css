@@ -401,6 +401,14 @@ h1 .hl { color: var(--amber); }
 }
 .draft-note b { color: var(--amber); text-transform: uppercase; letter-spacing: 0.1em; }
 
+/* long-form content: sub-headings, tables (blog + guides) */
+.legal-body h3 { font-size: 16px; margin: 22px 0 6px; color: var(--fg); }
+.legal-body .table-wrap { overflow-x: auto; margin: 18px 0; }
+.legal-body table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.legal-body th, .legal-body td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; }
+.legal-body thead th { color: var(--fg); background: var(--panel); font-weight: 600; white-space: nowrap; }
+.legal-body td { color: var(--dim); }
+
 /* ---------- responsive (intentional per DESIGN.md, not "stacked") ---------- */
 @media (max-width: 1100px) {
   .hero { grid-template-columns: 1fr; gap: 36px; }

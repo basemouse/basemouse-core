@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>What Is a Context Layer for AI Agents? (2026 Guide) — BaseMouse</title>
+    <meta name="description" content="A context layer is the tier between your data and your AI agents that decides what the agent knows at each step. Here is what it does, how it differs from RAG, and why provenance is the part most teams miss." />
+    <link rel="canonical" href="https://basemouse.com/blog/context-layer-for-ai-agents.html" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b09" />
+    <meta property="og:title" content="What Is a Context Layer for AI Agents?" />
+    <meta property="og:description" content="The tier between your data and your AI agents that decides what the agent knows at each step. What it does, how it differs from RAG, and why provenance matters." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://basemouse.com/blog/context-layer-for-ai-agents.html" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a context layer for AI agents?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is the architectural tier between your data sources and your AI agents that decides what an agent knows at each step, assembling, filtering, versioning, and governing the information the agent reasons over."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between a context layer and RAG?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "RAG retrieves text chunks that resemble a query. A context layer is the broader system around retrieval that also handles memory, versioning, access control, and provenance, so the agent works with information it can trust and trace."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do AI agents need a context layer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Without one, agents drift on stale data, hallucinate over disjointed fragments, and loop because they cannot track what they already know. A context layer gives them a single governed source of truth, which is what makes production agents reliable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the components of a context layer?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Operational context (static versus live state), semantic context (business meaning), memory management (what to keep or drop), and governance with provenance (access control plus a source, version, and checksum on every fact)."
+      }
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BaseMouse home">
+          <svg class="logo-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false">
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="#121310" />
+            <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+            <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+            <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+            <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+          </svg>
+          <span>BASE<b>MOUSE</b></span>
+        </a>
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="/">home</a>
+          <a href="/blog/context-engineering-vs-prompt-engineering.html">context vs prompt</a>
+          <a href="https://github.com/basemouse/basemouse-core">docs</a>
+        </nav>
+        <a class="btn primary topbar-cta" href="/">Get your key</a>
+      </header>
+
+      <main id="main" class="legal-body">
+        <p class="spec-strip"><span>GUIDE</span><span>CONTEXT LAYER</span><span>REV: <b>2026-07</b></span></p>
+        <h1>What Is a Context Layer for AI Agents?</h1>
+
+        <div class="draft-note">
+          <b>Short answer:</b> A context layer is the architectural tier between your data and your AI agents. It decides what an agent knows at each step of a task, assembling, filtering, and governing the information the agent reasons over. It is the difference between an agent that works in a demo and one that holds up in production against real, changing company data.
+        </div>
+
+        <h2>What is a context layer?</h2>
+        <p>An AI agent is only as good as what it can see at the moment it acts. In a demo, that is easy: one user, one short conversation, fresh data. In production it is the opposite. The agent runs for many steps, calls tools, spans sessions, and reasons over data that changes underneath it.</p>
+        <p>A context layer is the part of your stack that manages that. It sits between your raw sources (documents, databases, tickets, code, tool outputs) and the model, and at every step it answers one question: what does this agent need to know right now, and what should it not see? It is the agent's working memory and its filing system at once.</p>
+
+        <h2>Context layer vs RAG</h2>
+        <p>Retrieval-augmented generation (RAG) is a piece of a context layer, not a replacement for it. RAG answers "find me chunks that look similar to this query." A context layer answers the harder questions around that:</p>
+        <ul>
+          <li>Which of these chunks are still true, and which version am I looking at?</li>
+          <li>What should the agent remember from three steps ago, and what should it forget?</li>
+          <li>Is the agent allowed to see this document at all?</li>
+          <li>Where did this fact come from, so a human can check it later?</li>
+        </ul>
+        <p>Put simply: RAG retrieves. A context layer governs, versions, and traces. Vector similarity alone gives you plausible text with no lineage. A context layer gives you information the agent (and you) can trust.</p>
+
+        <h2>The components of a context layer</h2>
+        <p>Most production context layers do four jobs:</p>
+        <ul>
+          <li><b>Operational context.</b> Separate durable knowledge (API specs, policies, product facts) from fast-changing state (the current user, this session, live values). Mixing them is how agents act on stale data.</li>
+          <li><b>Semantic context.</b> Translate raw tables and documents into terms the agent understands, so "revenue" means the same thing to the agent that it means to your finance team.</li>
+          <li><b>Memory management.</b> Decide what to keep, summarize, or drop across a long task, so the agent stays inside its token budget without losing the thread.</li>
+          <li><b>Governance and provenance.</b> Enforce the same access rules a human would face, and attach a source, a version, and a checksum to every fact, so answers are traceable and auditable.</li>
+        </ul>
+
+        <h2>Why agents need a dedicated context layer</h2>
+        <p>Without one, agents fail in familiar ways. They drift when the data moves and their context does not. They hallucinate when they stitch together disjointed fragments with no source. They loop when they cannot tell what they already know. These are not model problems. They are context problems, and no larger model fixes them.</p>
+        <p>A context layer gives the agent a single, governed source of truth. That is what moves a team from a prompt-based prototype to an agent you can actually put in front of customers or auditors.</p>
+
+        <h2>The part most guides skip: provenance and versioning</h2>
+        <p>The current wave of context layer writing focuses on retrieval, semantics, and memory. The piece that decides whether you can ship is quieter: provenance. When an agent asserts something, can you point to the exact document, the exact version, and prove it was not altered?</p>
+        <p>Vector chunks do not carry that. Provenance and lineage are what raw retrieval lacks, and they are what turns "the agent said so" into "the agent said so, and here is the cited, versioned, checksummed source it read." When an answer is wrong, that trace is the difference between a five-minute fix and an afternoon of guessing. When an auditor asks why the agent did something, it is the difference between a clean record and a shrug.</p>
+        <p>This is exactly what <a href="/">BaseMouse</a> is built for: it serves cited, checksummed, versioned context packs from your own documents, so the context your agents reason over is grounded and traceable by construction, not bolted on afterward.</p>
+
+        <h2>FAQ</h2>
+        <h3>What is a context layer for AI agents?</h3>
+        <p>It is the architectural tier between your data sources and your AI agents that decides what an agent knows at each step, assembling, filtering, versioning, and governing the information the agent reasons over.</p>
+        <h3>What is the difference between a context layer and RAG?</h3>
+        <p>RAG retrieves text chunks that resemble a query. A context layer is the broader system around retrieval that also handles memory, versioning, access control, and provenance, so the agent works with information it can trust and trace.</p>
+        <h3>Why do AI agents need a context layer?</h3>
+        <p>Without one, agents drift on stale data, hallucinate over disjointed fragments, and loop because they cannot track what they already know. A context layer gives them a single governed source of truth, which is what makes production agents reliable.</p>
+        <h3>What are the components of a context layer?</h3>
+        <p>Operational context (static versus live state), semantic context (business meaning), memory management (what to keep or drop), and governance with provenance (access control plus a source, version, and checksum on every fact).</p>
+      </main>
+
+      <footer class="colophon">
+        <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
+        <span class="colophon-mid"><a href="/">home</a> · <a href="/blog/context-engineering-vs-prompt-engineering.html">context vs prompt</a> · <a href="https://github.com/basemouse/basemouse-core">repo</a></span>
+        <span>NO BLACK BOXES. NO SILENT EDITS.</span>
+      </footer>
+    </div>
+  </body>
+</html>

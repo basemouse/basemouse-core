@@ -62,6 +62,18 @@ test('responses carry security headers', async () => {
   assert.match(staticRes.headers.get('content-security-policy'), /frame-ancestors 'none'/);
 });
 
+test('directory requests serve the directory index.html', async () => {
+  const withSlash = await fetch(`${base}/blog/`);
+  assert.equal(withSlash.status, 200);
+  assert.match(withSlash.headers.get('content-type'), /text\/html/);
+  assert.match(await withSlash.text(), /<h1>Guides<\/h1>/);
+
+  // The no-trailing-slash form resolves to the same index.html.
+  const noSlash = await fetch(`${base}/blog`);
+  assert.equal(noSlash.status, 200);
+  assert.match(await noSlash.text(), /<h1>Guides<\/h1>/);
+});
+
 test('repository endpoint returns count + items', async () => {
   const res = await fetch(`${base}/api/repository`);
   const body = await res.json();
