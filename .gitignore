@@ -9,6 +9,12 @@ coverage/
 # Local MCP configs
 .mcp.json
 
+# Browser-automation scratch output (QA/dogfooding). Snapshots and screenshots
+# capture logged-in state, so these are never shared artifacts. Also excluded
+# from the open-core sync via scripts/core-exclude.txt — rsync ignores this
+# file, so that listing is the guard that actually holds.
+.playwright-mcp/
+
 # Per-developer session log (imported into BaseMouse from disk; not a shared artifact)
 /PROGRESS.md
 
