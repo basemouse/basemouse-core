@@ -56,7 +56,9 @@
         <section class="hero">
           <div class="hero-copy">
             <p class="spec-strip" aria-label="Product metadata">
-              <span>UNIT: AGENT-MEMORY</span><span>REV: <b>0.3</b></span><span>STORE: <b id="metric-docs-wrap">CROSS-TOOL</b></span>
+              <span>UNIT: AGENT-MEMORY</span>
+              <span>REV: <b>0.3</b></span>
+              <span>STORE: <b id="metric-docs-wrap">CROSS-TOOL</b></span>
             </p>
             <h1 aria-label="One memory for your agents, every AI tool.">ONE MEMORY FOR YOUR AGENTS, <span class="hl">EVERY</span> AI TOOL.</h1>
             <p class="sub">
@@ -124,9 +126,47 @@
           </div>
         </section>
 
+        <section class="quickstart" id="connect" aria-label="MCP quickstart">
+          <div class="qs-intro">
+            <p class="spec-strip">
+              <span>MCP</span>
+              <span>REMOTE HTTP</span>
+            </p>
+            <h2 aria-label="Connect once, from any tool.">CONNECT ONCE, FROM ANY TOOL.</h2>
+            <p class="sub">BaseMouse is a remote MCP server at <code>POST https://basemouse.com/mcp</code>. Add it once and every agent reads and writes the same memory.</p>
+            <p class="sub">Omit the header to browse the public demo corpus. Add your Bearer key for your own workspace.</p>
+            <ul class="qs-list">
+              <li><code>search</code> — find relevant context</li>
+              <li><code>get_context_pack</code> — an agent-ready bundle</li>
+              <li><code>upsert_document</code> — persist decisions by stable id</li>
+            </ul>
+          </div>
+          <figure class="code-card">
+            <div class="code-head">
+              <span class="code-label">Claude Code</span>
+            </div>
+            <pre class="code-block" aria-label="Claude Code install command"><code>claude mcp add --transport http basemouse https://basemouse.com/mcp \
+  --header "Authorization: Bearer bm_..."</code></pre>
+            <div class="code-head">
+              <span class="code-label">Cursor — ~/.cursor/mcp.json</span>
+            </div>
+            <pre class="code-block code-response" aria-label="Cursor configuration"><code>{
+  "mcpServers": {
+    "basemouse": {
+      "url": "https://basemouse.com/mcp",
+      "headers": { "Authorization": "Bearer bm_..." }
+    }
+  }
+}</code></pre>
+          </figure>
+        </section>
+
         <section class="quickstart" id="api" aria-label="API quickstart">
           <div class="qs-intro">
-            <p class="spec-strip"><span>API</span><span>NO SDK REQUIRED</span></p>
+            <p class="spec-strip">
+              <span>API</span>
+              <span>NO SDK REQUIRED</span>
+            </p>
             <h2 aria-label="One call from your agent.">ONE CALL FROM YOUR AGENT.</h2>
             <p class="sub">The demo docs need no key. Your documents need one header.</p>
             <p class="sub">For your engineers: it's a single HTTP call, no SDK to install. The endpoints below show exactly what comes back.</p>
@@ -168,7 +208,10 @@
         </section>
 
         <section class="opencore" id="open-core" aria-label="Open core">
-          <p class="spec-strip"><span>OPEN CORE</span><span>MIT LICENSED</span></p>
+          <p class="spec-strip">
+            <span>OPEN CORE</span>
+            <span>MIT LICENSED</span>
+          </p>
           <h2 aria-label="Run the core yourself.">RUN THE CORE YOURSELF.</h2>
           <p class="sub">
             BaseMouse is <b>open source at its heart</b>. The engine that imports your docs and
@@ -184,7 +227,10 @@
         </section>
 
         <section class="faq" id="faq" aria-label="Frequently asked questions">
-          <p class="spec-strip"><span>FAQ</span><span>PLAIN ANSWERS</span></p>
+          <p class="spec-strip">
+            <span>FAQ</span>
+            <span>PLAIN ANSWERS</span>
+          </p>
           <h2 aria-label="Questions, answered.">QUESTIONS, ANSWERED.</h2>
           <details>
             <summary>What does BaseMouse actually do?</summary>
