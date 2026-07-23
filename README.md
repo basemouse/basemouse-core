@@ -218,7 +218,7 @@ pages you when degraded mode persists >5m or claim failures spike — see
 `GET /healthz` reports liveness plus non-secret deployment posture: `billing`
 and `meshai` enablement and a `license` object (mode, tier, whether a license
 key is present, expiry). The license key value is server-only and never appears
-in any response — see `docs/enterprise-self-hosted.md`.
+in any response.
 
 ### Faceted filters
 
@@ -302,18 +302,14 @@ BILLING_CONTACT_URL     # optional mailto/CRM URL for Enterprise/contact-sales f
 STRIPE_PRICING_TABLE_ID # optional public ID reserved for future pricing table embed
 ```
 
-The Stripe product and recurring prices already exist — they are provisioned and
-verified in the live Stripe account, so no Dashboard product/price creation is
-needed. The current mapping (BaseMouse product, Starter `$29/mo`, Team `$99/mo`,
-each tagged with `tier` metadata) and the full verification checklist live in
-[`docs/stripe.md`](docs/stripe.md). The short version of what still needs
-operator action to take real payments:
+To take real payments, a hosted operator provisions a Stripe product with
+recurring prices (each tagged with `tier` metadata) and then:
 
 1. Set the GitHub repo secrets (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER`,
    `STRIPE_PRICE_TEAM`, `STRIPE_WEBHOOK_SECRET`, optional `STRIPE_PUBLISHABLE_KEY`)
-   with the price IDs recorded in `docs/stripe.md` — never commit them to git.
+   with the price IDs from the Stripe account — never commit them to git.
 2. Create a webhook endpoint pointing at `/api/stripe/webhook` and copy its
-   signing secret into `STRIPE_WEBHOOK_SECRET` (events listed in `docs/stripe.md`).
+   signing secret into `STRIPE_WEBHOOK_SECRET`.
 3. `CHECKOUT_ENABLED=true` already ships in `k8s/deployment.yaml`; for local dev
    set it in `.env`.
 4. Verify `/api/billing/config` shows checkout-enabled tiers without exposing
@@ -358,8 +354,7 @@ deploy the same image with the Docker Compose examples in `deployment/compose/`
 
 > The repository that agents actually love.
 
-**Shipped today** (see [`docs/open-source.md`](docs/open-source.md) for the
-authoritative, test-backed list):
+**Shipped today**:
 
 - Agent Context Engine — structured/versioned `basemouse.context_pack.v1` exports
 - retrieval: lexical + faceted + **graph-aware** linking + metadata, with
