@@ -212,8 +212,8 @@ self-hosted instance).
 
 `GET /metrics` exposes Prometheus-format counters (pack pulls, quota denials,
 claims, degraded state). Set `ALERT_WEBHOOK_URL` (ntfy/Slack) and the app
-pages you when degraded mode persists >5m or claim failures spike — see
-`docs/RUNBOOK.md`. The OpenAPI spec lives at `/api/openapi.json`.
+pages you when degraded mode persists >5m or claim failures spike. The
+OpenAPI spec lives at `/api/openapi.json`.
 
 `GET /healthz` reports liveness plus non-secret deployment posture: `billing`
 and `meshai` enablement and a `license` object (mode, tier, whether a license

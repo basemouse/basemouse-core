@@ -8,8 +8,7 @@ welcome.
 
 - **Be accurate, never overclaim.** Pricing copy, docs, and READMEs must describe
   what the code actually does today. If something is on the roadmap, label it as
-  roadmap. See [`docs/open-source.md`](docs/open-source.md) for the current
-  implemented-vs-roadmap breakdown.
+  roadmap.
 - **No secrets in the repo.** Never commit API keys, Stripe secret/restricted
   keys, price IDs, webhook secrets, or `.env` files. Secrets are loaded from the
   environment and stay server-side. The browser only ever receives the

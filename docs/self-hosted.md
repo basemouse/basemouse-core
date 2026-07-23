@@ -140,11 +140,6 @@ BASEMOUSE_SELF_HOSTED=true
 `/healthz` reports the non-secret posture under a `license` object (mode, tier,
 whether a key is present, expiry). The key value is server-only.
 
-For VPC/internal DNS guidance, API keys, audit/history, the MeshAI governance
-hook, and Stripe-in-self-hosted constraints, see
-[`docs/enterprise-self-hosted.md`](enterprise-self-hosted.md). For the
-marketplace/plugin directory roadmap, see [`docs/marketplace.md`](marketplace.md).
-
 ## Security checklist
 
 - Keep `BASEMOUSE_TOKEN`, Slack tokens, and LLM credentials in `.env`/secret managers only.
