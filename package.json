@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
+    "mcp:stdio": "node src/stdio.js",
     "test": "node --test",
     "lint": "bash -c 'set -e; for f in src/*.js src/handlers/*.js public/*.js scripts/*.mjs; do node --check \"$f\"; done'",
     "eval:retrieval": "node scripts/evaluate-retrieval.mjs --cases data/retrieval-eval/golden-seed.json --retrieval hybrid",
