@@ -6,7 +6,7 @@
 // (design decision 3A). Prints the plaintext key EXACTLY ONCE; only its
 // SHA-256 hash is stored.
 //
-//   DATABASE_URL=... node scripts/issue-key.mjs --plan starter [--actor operator]
+//   DATABASE_URL=... node scripts/issue-key.mjs --plan starter [--actor <name>]
 //   DATABASE_URL=... node scripts/issue-key.mjs --reissue --key-id <id>
 //   DATABASE_URL=... node scripts/issue-key.mjs --revoke --key-id <id>
 //   DATABASE_URL=... node scripts/issue-key.mjs --read-only --key-id <id>

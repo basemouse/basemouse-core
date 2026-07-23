@@ -30,7 +30,7 @@ This is a small zero-dependency Node.js app:
 - Slack Socket Mode connector for local LLM + BaseMouse grounding in `integrations/slack/`
 - Dockerfile plus self-hosted Docker Compose examples in `deployment/compose/` (see `docs/self-hosted.md`)
 - retrieval quality eval harness (`npm run eval:retrieval`) with golden queries in `data/retrieval-eval/`
-- Kubernetes manifests for redacted-host K3s
+- Kubernetes manifests in `k8s/`
 - GitHub Actions workflow for test/build/push/deploy on `main`
 
 ## Local development
@@ -337,47 +337,22 @@ data/seed/*.json
 
 Each document is normalized by `src/store.js`, gets deterministic provenance metadata, and receives a stable 16-character SHA-256 checksum from the normalized content.
 
-## Kubernetes deployment target
+## Deployment
 
-Server:
-
-```text
-operator@REDACTED-IP
-hostname: redacted-host
-cluster: K3s
-namespace: apps
-ingress: Traefik
-```
-
-Current production app host:
-
-```text
-https://basemouse.REDACTED-IP.nip.io
-```
-
-Deployment is handled by `.github/workflows/deploy.yml`:
-
-1. GitHub-hosted runner runs tests, lint, Docker build, and GHCR push.
-2. The redacted-host self-hosted runner applies K8s manifests locally and rolls out the new image.
-
-The redacted-host runner service is:
-
-```bash
-systemctl --user status basemouse-github-runner.service
-journalctl --user -u basemouse-github-runner.service -f
-```
+The hosted service runs on Kubernetes. Continuous deployment is handled by
+`.github/workflows/deploy.yml`: a runner builds and pushes the image, then
+applies the `k8s/` manifests and rolls out the new revision. Self-hosters can
+deploy the same image with the Docker Compose examples in `deployment/compose/`
+(see `docs/self-hosted.md`).
 
 ## Key docs
 
-- [`docs/BaseMouse_Technical_Documentation_v1.1.md`](docs/BaseMouse_Technical_Documentation_v1.1.md)
-- [`docs/stripe.md`](docs/stripe.md) — Stripe product/price mapping, webhook events, GitHub secrets, verification
-- [`docs/open-source.md`](docs/open-source.md) — open-core positioning; shipped vs roadmap
+- [`docs/getting-started.md`](docs/getting-started.md) — first calls against the API and MCP endpoint
+- [`docs/agent-integration.md`](docs/agent-integration.md) — wiring BaseMouse into agents and MCP clients
+- [`docs/client-libraries.md`](docs/client-libraries.md) — JavaScript and Python API clients
 - [`docs/retrieval-eval.md`](docs/retrieval-eval.md) — golden-query retrieval quality harness
 - [`docs/demo-corpus-agent-governance.md`](docs/demo-corpus-agent-governance.md) — public Agent Governance Demo corpus, page, and eval baseline
-- [`docs/claude-improvement-loop.md`](docs/claude-improvement-loop.md)
 - [`docs/self-hosted.md`](docs/self-hosted.md) — run BaseMouse + local LLM + Slack inside a company network
-- [`docs/enterprise-self-hosted.md`](docs/enterprise-self-hosted.md) — VPC/internal DNS, API keys, audit, licensing envs, Stripe parity constraints (SSO/RBAC/GraphRAG marked roadmap)
-- [`docs/marketplace.md`](docs/marketplace.md) — marketplace/plugin directory shape (roadmap)
 
 ## Product thesis
 

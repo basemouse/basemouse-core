@@ -1,7 +1,5 @@
 # BaseMouse Design System — "Terminal Industrial"
 
-Approved 2026-06-11 via /plan-design-review (docs/designs/website-redesign.md).
-The reference mockup is law: `docs/designs/website-redesign-mockup.html`.
 Every page BaseMouse ships — marketing, /claim, future docs/dashboard — uses
 this system. If a change can't cite a token or rule below, it doesn't ship.
 
