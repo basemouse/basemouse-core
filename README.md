@@ -3,7 +3,7 @@
 **Domain:** basemouse.com  
 **GitHub org:** https://github.com/basemouse  
 **Status:** live (paid plans)
-**Version:** v0.2
+**Version:** v0.3
 
 BaseMouse is an AI-native document/notes repository for workspaces and agents: a local-first knowledge base that exports structured, versioned context packs agents can actually use.
 
