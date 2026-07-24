@@ -1,0 +1,12 @@
+{
+  "id": "memory-capsules",
+  "title": "Memory Capsules",
+  "type": "feature",
+  "tags": ["memory", "agents", "portable"],
+  "body": "Reusable, versioned knowledge packets for projects, customers, policies, onboarding, and agent handoffs.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-01-19T00:00:00.000Z",
+  "updatedAt": "2026-05-30T00:00:00.000Z",
+  "version": 4,
+  "links": ["agent-context-engine"]
+}

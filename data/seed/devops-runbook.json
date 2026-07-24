@@ -1,0 +1,12 @@
+{
+  "id": "devops-runbook",
+  "title": "DevOps Runbook",
+  "type": "note",
+  "tags": ["devops", "runbook", "incident-response", "handoff"],
+  "body": "Operational runbook context for deployments, health checks, rollback steps, and incident handoffs so agents can act with provenance instead of guessing.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-02-08T00:00:00.000Z",
+  "updatedAt": "2026-05-25T00:00:00.000Z",
+  "version": 1,
+  "links": ["agent-context-engine", "provenance-graph"]
+}

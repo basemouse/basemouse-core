@@ -1,0 +1,12 @@
+{
+  "id": "visual-rag",
+  "title": "Visual RAG and Precision UX",
+  "type": "experience",
+  "tags": ["ux", "canvas", "rag"],
+  "body": "Mouse-precision knowledge navigation: select a region, summarize a cluster, ask an agent, or export a context pack.",
+  "author": "BaseMouse Design",
+  "createdAt": "2026-02-02T00:00:00.000Z",
+  "updatedAt": "2026-03-14T00:00:00.000Z",
+  "version": 1,
+  "links": ["hybrid-search"]
+}

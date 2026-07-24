@@ -1,0 +1,12 @@
+{
+  "id": "hybrid-search",
+  "title": "Hybrid Search",
+  "type": "feature",
+  "tags": ["search", "rag", "graph"],
+  "body": "Combine lexical search, vector similarity, graph metadata, provenance, confidence, and freshness signals.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-01-11T00:00:00.000Z",
+  "updatedAt": "2026-04-22T00:00:00.000Z",
+  "version": 2,
+  "links": ["graphrag-provenance", "agent-context-engine"]
+}

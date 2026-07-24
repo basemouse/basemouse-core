@@ -1,0 +1,12 @@
+{
+  "id": "prd-template",
+  "title": "PRD Template",
+  "type": "note",
+  "tags": ["prd", "template", "product", "requirements"],
+  "body": "Product requirements template for turning customer problems, success metrics, constraints, and roadmap decisions into reusable context packs for agents and teams.",
+  "author": "BaseMouse Core",
+  "createdAt": "2026-02-12T00:00:00.000Z",
+  "updatedAt": "2026-05-24T00:00:00.000Z",
+  "version": 1,
+  "links": ["memory-capsules", "agent-context-engine"]
+}

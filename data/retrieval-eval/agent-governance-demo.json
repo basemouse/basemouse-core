@@ -1,0 +1,165 @@
+{
+  "description": "Agent-governance demo corpus retrieval quality suite. Synthetic but representative until a design-partner corpus is available; each case names the primary expected document.",
+  "cases": [
+    {
+      "id": "evidence-span-fields",
+      "query": "what fields should an OpenTelemetry evidence span include for context retrieval",
+      "expected": [
+        "otel-evidence-span"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "prove-agent-grounding",
+      "query": "how do we prove what context grounded an agent answer during audit",
+      "expected": [
+        "context-pack-audit-evidence"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "checksum-drift",
+      "query": "which policy explains version checksums and stale document drift",
+      "expected": [
+        "provenance-checksum-policy"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "eu-logging",
+      "query": "EU AI Act logging controls for high risk agents",
+      "expected": [
+        "eu-ai-act-logging-controls"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "human-approval",
+      "query": "human oversight checkpoints approve high risk agent actions regulated advice production deployment",
+      "expected": [
+        "human-oversight-checkpoints"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "tool-permissions",
+      "query": "how should agent tool permissions and scopes be governed",
+      "expected": [
+        "tool-registry-permissions"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "prompt-injection",
+      "query": "prompt injection incident playbook for hostile instructions and tool limits",
+      "expected": [
+        "prompt-injection-playbook"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "cost-spike",
+      "query": "investigate agent cost spike from retrieval volume model calls and tool fanout",
+      "expected": [
+        "cost-spike-investigation"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "privacy-redaction",
+      "query": "redact PII from evidence payloads without storing document bodies",
+      "expected": [
+        "privacy-redaction-rules"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "agent-registry",
+      "query": "what belongs in an agent registry entry owner tools risk tier evidence",
+      "expected": [
+        "agent-registry-model"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "incident-bundle",
+      "query": "what should an audit evidence bundle include for an agent incident",
+      "expected": [
+        "evidence-bundle-format"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "severity-escalation",
+      "query": "classify agent incident severity and escalate policy violations",
+      "expected": [
+        "incident-severity-model"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "support-refunds",
+      "query": "support bot refund policy approval threshold and context version",
+      "expected": [
+        "support-agent-refund-policy"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "customer-boundary",
+      "query": "support agent customer data boundary tenant filters case id privacy",
+      "expected": [
+        "customer-data-boundary"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "golden-queries",
+      "query": "design golden queries with expected ids for retrieval quality gates",
+      "expected": [
+        "golden-query-design"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "semantic-rollout",
+      "query": "roll out semantic embedding provider after measuring recall and MRR baseline",
+      "expected": [
+        "semantic-embedding-rollout"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "graphrag-plan",
+      "query": "full GraphRAG multi hop relationship weighting entity aware traversal",
+      "expected": [
+        "graphrag-rollout-plan"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "mesh-control-plane",
+      "query": "MeshAI control plane connects registry telemetry policies cost intelligence audit artifacts",
+      "expected": [
+        "meshai-control-plane"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "anomaly-signals",
+      "query": "detect unusual retrieval volume sensitive data domains policy denials cost anomalies",
+      "expected": [
+        "anomaly-detection-signals"
+      ],
+      "limit": 5
+    },
+    {
+      "id": "collector-fanout",
+      "query": "fan out OTLP evidence spans to Datadog Honeycomb Tempo and MeshAI",
+      "expected": [
+        "collector-fanout-pattern"
+      ],
+      "limit": 5
+    }
+  ]
+}
