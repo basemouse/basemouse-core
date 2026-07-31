@@ -10,9 +10,13 @@
   --fg: #e8e6df;
   --dim: #8b897f;
   --amber: #ffb000;
+  --amber-hot: #ffc234;
   --amber-ink: #1a1404;
   --amber-dim: rgba(255, 176, 0, 0.14);
   --ok: #9acd32;
+  /* The system has exactly one elevation, used only on .term (DESIGN.md). */
+  --shadow-lift: 0 0 0 1px #000, 0 24px 60px rgba(0, 0, 0, 0.5);
+  --scanline: rgba(0, 0, 0, 0.12);
   --disp: "Archivo", sans-serif;
   --mono: "JetBrains Mono", monospace;
 }
@@ -32,7 +36,7 @@ body::after {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(0deg, var(--scanline) 0 1px, transparent 1px 3px);
   opacity: 0.3;
 }
 @media (prefers-reduced-motion: reduce), (prefers-contrast: more) {
@@ -97,7 +101,7 @@ button, input { font: inherit; }
   cursor: pointer; background: none; color: var(--fg);
 }
 .btn.primary { background: var(--amber); color: var(--amber-ink); border-color: var(--amber); }
-.btn.primary:hover { background: #ffc234; }
+.btn.primary:hover { background: var(--amber-hot); }
 .btn.ghost:hover { border-color: var(--amber); color: var(--amber); }
 .topbar-cta { padding: 10px 18px; }
 
@@ -127,7 +131,7 @@ h1 .hl { color: var(--amber); }
 .term {
   background: var(--panel);
   border: 1px solid var(--line-hot);
-  box-shadow: 0 0 0 1px #000, 0 24px 60px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lift);
   display: flex; flex-direction: column;
 }
 .term-bar {
@@ -316,7 +320,7 @@ h1 .hl { color: var(--amber); }
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
   font-size: 13px; padding: 13px 20px; cursor: pointer;
 }
-.button.primary:hover { background: #ffc234; }
+.button.primary:hover { background: var(--amber-hot); }
 .button.primary:disabled { opacity: 0.6; cursor: wait; }
 .button.secondary {
   background: none; color: var(--fg); border: 1px solid var(--line-hot);

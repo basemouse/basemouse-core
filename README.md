@@ -341,6 +341,13 @@ applies the `k8s/` manifests and rolls out the new revision. Self-hosters can
 deploy the same image with the Docker Compose examples in `deployment/compose/`
 (see `docs/self-hosted.md`).
 
+Set `CANONICAL_HOST` to your bare domain (e.g. `example.com`) if you serve the
+same site on both the apex and `www.` hostnames: GET and HEAD requests arriving
+on `www.<CANONICAL_HOST>` are then 308'd to the bare host, so crawlers index one
+origin instead of two. Only GET and HEAD are redirected, so the POST traffic that
+carries every API, MCP, and webhook call is never moved. Leave it unset
+to disable the redirect entirely — that is the default.
+
 ## Key docs
 
 - [`docs/getting-started.md`](docs/getting-started.md) — first calls against the API and MCP endpoint

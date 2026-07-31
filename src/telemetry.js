@@ -27,9 +27,9 @@
 //                            timeout 3s · errors swallowed · no retry (v1)
 
 import { randomBytes } from 'node:crypto';
+import { VERSION } from './version.js';
 
 const SCOPE_NAME = 'basemouse';
-const SCOPE_VERSION = '0.2.0';
 const SPAN_KIND_SERVER = 2; // OTLP SpanKind.SERVER
 const STATUS_CODE_OK = 1; // OTLP StatusCode.OK
 const DEFAULT_TIMEOUT_MS = 3000;
@@ -124,14 +124,14 @@ export function buildContextPackPayload(pack, { startMs, endMs }, config) {
         resource: {
           attributes: [
             attr('service.name', config.serviceName),
-            attr('service.version', SCOPE_VERSION),
+            attr('service.version', VERSION),
             attr('meshai.agent.framework', 'basemouse'),
             attr('gen_ai.system', 'basemouse')
           ]
         },
         scopeSpans: [
           {
-            scope: { name: SCOPE_NAME, version: SCOPE_VERSION },
+            scope: { name: SCOPE_NAME, version: VERSION },
             spans: [
               {
                 traceId: randomBytes(16).toString('hex'),

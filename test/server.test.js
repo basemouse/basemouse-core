@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import http from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { test, before, after } from 'node:test';
 import { createApp } from '../src/server.js';
 import { loadBillingConfig } from '../src/billing.js';
@@ -407,4 +409,147 @@ test('serves the design partner intake page from the homepage', async () => {
   assert.match(html, /Bring us your messy docs/);
   assert.match(html, /20–100 docs/);
   assert.match(html, /devsupport@basemouse\.com/);
+});
+
+// --- canonical host (www -> bare host) --------------------------------------
+
+// fetch() refuses to set Host (a forbidden header name), so these go out over
+// raw http.request — the Host header is the entire point of the test.
+function request(origin, { path = '/', method = 'GET', host, body, headers = {} } = {}) {
+  const { port, hostname } = new URL(origin);
+  return new Promise((resolve, reject) => {
+    const req = http.request(
+      { host: hostname, port, path, method, headers: { ...(host ? { host } : {}), ...headers } },
+      (res) => {
+        let raw = '';
+        res.on('data', (chunk) => { raw += chunk; });
+        res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, raw }));
+      }
+    );
+    req.on('error', reject);
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+async function withCanonicalApp(run) {
+  const app = createApp(createSeedRepository(), { canonicalHost: 'basemouse.com' });
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    await run(`http://127.0.0.1:${port}`);
+  } finally {
+    app.close();
+  }
+}
+
+test('308s www requests to the bare canonical host, preserving path and query', async () => {
+  await withCanonicalApp(async (origin) => {
+    const res = await request(origin, { path: '/blog/?utm_source=x', host: 'www.basemouse.com' });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'https://basemouse.com/blog/?utm_source=x');
+  });
+});
+
+test('canonical redirect ignores the port on the Host header', async () => {
+  await withCanonicalApp(async (origin) => {
+    const res = await request(origin, { host: 'www.basemouse.com:8443' });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'https://basemouse.com/');
+  });
+});
+
+test('canonical redirect leaves the bare host and unrelated hosts alone', async () => {
+  await withCanonicalApp(async (origin) => {
+    for (const host of ['basemouse.com', 'internal.example.com']) {
+      const res = await request(origin, { host });
+      assert.equal(res.status, 200, `${host} must be served, not redirected`);
+    }
+  });
+});
+
+test('canonical redirect never touches API/MCP writes on the www host', async () => {
+  await withCanonicalApp(async (origin) => {
+    // A 308 would make the client re-POST to a different origin; MCP must not move.
+    const res = await request(origin, {
+      path: '/mcp',
+      method: 'POST',
+      host: 'www.basemouse.com',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+    });
+    assert.notEqual(res.status, 308);
+    assert.ok(Array.isArray(JSON.parse(res.raw).result?.tools), 'MCP tools/list must answer on the www host');
+  });
+});
+
+test('canonical redirect is off unless a canonical host is configured', async () => {
+  const res = await request(base, { host: 'www.basemouse.com' });
+  assert.equal(res.status, 200);
+});
+
+test('canonical redirect covers HEAD, not just GET', async () => {
+  await withCanonicalApp(async (origin) => {
+    const res = await request(origin, { method: 'HEAD', host: 'www.basemouse.com' });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'https://basemouse.com/');
+  });
+});
+
+test('canonical redirect honours x-forwarded-proto from the ingress', async () => {
+  await withCanonicalApp(async (origin) => {
+    // Traefik terminates TLS; without this the redirect would force https on a
+    // plain-http hop and could loop. Comma-joined values take the first hop.
+    const res = await request(origin, {
+      host: 'www.basemouse.com',
+      headers: { 'x-forwarded-proto': 'http, https' }
+    });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'http://basemouse.com/');
+  });
+});
+
+test('canonical host can be configured from the CANONICAL_HOST env var', async () => {
+  const previous = process.env.CANONICAL_HOST;
+  process.env.CANONICAL_HOST = 'basemouse.com';
+  const app = createApp(createSeedRepository());
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const res = await request(`http://127.0.0.1:${port}`, { host: 'www.basemouse.com' });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'https://basemouse.com/');
+  } finally {
+    app.close();
+    if (previous === undefined) delete process.env.CANONICAL_HOST;
+    else process.env.CANONICAL_HOST = previous;
+  }
+});
+
+test('canonical redirect rejects a bogus x-forwarded-proto instead of reflecting it', async () => {
+  await withCanonicalApp(async (origin) => {
+    // A client-supplied header must never choose the Location scheme.
+    const res = await request(origin, {
+      host: 'www.basemouse.com',
+      headers: { 'x-forwarded-proto': 'javascript' }
+    });
+    assert.equal(res.status, 308);
+    assert.equal(res.headers.location, 'https://basemouse.com/');
+  });
+});
+
+test('healthz and MCP serverInfo report the package.json version, not a hardcoded copy', async () => {
+  // Regression: /healthz shipped the 0.3.0 release still reporting a hardcoded 0.2.0.
+  const { version } = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+
+  const health = await (await fetch(`${base}/healthz`)).json();
+  assert.equal(health.version, version);
+
+  const res = await fetch(`${base}/mcp`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })
+  });
+  const body = await res.json();
+  assert.equal(body.result.serverInfo.version, version);
 });

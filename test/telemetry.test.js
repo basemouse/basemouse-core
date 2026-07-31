@@ -4,6 +4,7 @@ import { createApp } from '../src/server.js';
 import { createSeedRepository } from '../src/store.js';
 import { createContextPack } from '../src/basemouse-core.js';
 import { buildContextPackPayload, createTelemetry, loadTelemetryConfig, tracesUrlFor } from '../src/telemetry.js';
+import { VERSION } from '../src/version.js';
 
 const ENABLED_ENV = {
   MESHAI_OTLP_ENDPOINT: 'https://api.meshai.dev/api/v1/ingest',
@@ -36,6 +37,21 @@ test('loadTelemetryConfig is disabled unless both endpoint and key are present',
   assert.equal(cfg.tracesUrl, 'https://api.meshai.dev/api/v1/ingest/v1/traces');
   assert.equal(cfg.serviceName, 'basemouse');
   assert.equal(cfg.timeoutMs, 3000);
+});
+
+// Regression: telemetry hardcoded SCOPE_VERSION = '0.2.0' and kept reporting it
+// after the app shipped 0.3.1, so every exported trace was mislabeled. Same
+// drift that made /healthz report 0.2.0 on the 0.3.0 release (see version.js).
+// Both the resource attribute and the instrumentation scope must track
+// package.json, so a version bump alone can never desync them again.
+test('OTLP payload reports the running version, never a hardcoded copy', () => {
+  const config = loadTelemetryConfig(ENABLED_ENV);
+  const payload = buildContextPackPayload(samplePack(), { startMs: 1_700_000_000_000, endMs: 1_700_000_000_050 }, config);
+  const rs = payload.resourceSpans[0];
+
+  assert.equal(findAttr(rs.resource.attributes, 'service.version').value.stringValue, VERSION);
+  assert.equal(rs.scopeSpans[0].scope.version, VERSION);
+  assert.equal(rs.scopeSpans[0].scope.name, 'basemouse');
 });
 
 test('buildContextPackPayload emits a well-formed OTLP span with evidence, not document bodies', () => {

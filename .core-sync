@@ -1,0 +1,5 @@
+# basemouse-core sync marker. Written by scripts/sync-core.sh in the product repo.
+# Records the product-repo commit this snapshot was taken from.
+# scripts/check-core-staleness.sh reads this to compute drift; a missing or
+# unreadable marker is a hard failure, not a skip. Do not edit by hand.
+ca92f4b6eb7219caf5e10e03fc314337f8c2fcd8

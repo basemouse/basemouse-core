@@ -9,6 +9,11 @@ coverage/
 # Local MCP configs
 .mcp.json
 
+# Windows Mark-of-the-Web sidecars. Created automatically when a file is
+# downloaded into the repo from a browser on Windows/WSL; they carry the
+# source URL, never repo content. Pure noise in git.
+*:Zone.Identifier
+
 # Browser-automation scratch output (QA/dogfooding). Snapshots and screenshots
 # capture logged-in state, so these are never shared artifacts. Also excluded
 # from the open-core sync via scripts/core-exclude.txt — rsync ignores this

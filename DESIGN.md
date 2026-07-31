@@ -22,10 +22,20 @@ Voice: utility language, zero hype. House line: "NO BLACK BOXES. NO SILENT EDITS
 --fg: #e8e6df;          /* body text                    */
 --dim: #8b897f;         /* secondary text — ≥16px ONLY  */
 --amber: #ffb000;       /* THE signal color             */
+--amber-hot: #ffc234;   /* amber hover/active ONLY      */
 --amber-ink: #1a1404;   /* text on amber                */
 --amber-dim: rgba(255,176,0,.14);  /* tinted fills      */
 --ok: #9acd32;          /* status-good only             */
+
+--shadow-lift: 0 0 0 1px #000, 0 24px 60px rgba(0,0,0,.5);  /* the ONE elevation */
+--scanline: rgba(0,0,0,.12);  /* CRT overlay tint — atmosphere only */
 ```
+
+**Elevation.** The system has exactly one shadow, `--shadow-lift`, and it lifts
+exactly one component: `terminal-window`. That is the point — the terminal is
+the centerpiece, and nothing else competes with it for depth. Do not add a
+second elevation or a shadow scale. Flat surfaces separate with `--line` and
+`--line-hot`, not with shadow.
 
 ## Type
 

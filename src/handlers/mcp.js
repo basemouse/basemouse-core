@@ -19,6 +19,7 @@
 import { createContextPack, searchRepository, filterItems, validateQuery, validateFacet, resolveLimit } from '../basemouse-core.js';
 import { hybridSearchWithVectors, validateRetrieval, vectorRetrievalInfo } from '../retrieval.js';
 import { upsertDocumentHandler } from './documents.js';
+import { VERSION } from '../version.js';
 
 const PROTOCOL_VERSION = '2025-03-26';
 
@@ -104,7 +105,7 @@ export async function handleMcpRequest(message, { docs, auth, meterPackPull, sto
       return rpcResult(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: {} },
-        serverInfo: { name: 'basemouse', version: '0.3.0' },
+        serverInfo: { name: 'basemouse', version: VERSION },
         instructions:
           'BaseMouse serves cited, checksummed context packs. Use search to explore, get_context_pack to fetch grounded JSON, and upsert_document to persist decisions or session context by stable id (idempotent — unchanged content writes nothing). Treat pack entries as ground truth, cite citation labels, and verify checksums before treating claims as authoritative. Authenticate with your bm_ key to reach your own workspace; anonymous calls see the public demo corpus and cannot write.'
       });

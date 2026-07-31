@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createContextPack, filterItems, resolveLimit, searchRepository, validateFacet, validateQuery } from './basemouse-core.js';
 import { hybridSearchWithVectors, validateRetrieval, vectorRetrievalInfo } from './retrieval.js';
 import { loadDocuments } from './store.js';
+import { VERSION } from './version.js';
 import { MemoryStore } from './memory-store.js';
 import { PgStore } from './pg-store.js';
 import { resolveKey, visibleWorkspaces } from './auth.js';
@@ -63,6 +64,34 @@ const SECURITY_HEADERS = {
   // page styles inline by design; fonts load from fonts.gstatic.com).
   'Content-Security-Policy': "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; object-src 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self'; connect-src 'self'"
 };
+
+// Strip the port from a Host header so "www.example.com:8443" compares equal to
+// "www.example.com". Only ever compared against `www.<canonical host>`, which is
+// a registrable domain — a bracketed IPv6 literal mangles to "[" here and simply
+// fails to match, which is the correct outcome.
+function hostWithoutPort(host) {
+  return String(host || '').trim().toLowerCase().split(':')[0];
+}
+
+// Canonical host redirect. When CANONICAL_HOST is set (production sets
+// basemouse.com), GET/HEAD requests arriving on the "www." variant are 308'd to
+// the bare host, so crawlers see one authoritative origin instead of two live
+// copies of the site. Deliberately unset by default: a self-hosted deployment
+// must never redirect its own visitors to basemouse.com.
+//
+// Only GET/HEAD redirect. API and MCP clients POSTing to the www hostname keep
+// working untouched — a 308 would make them re-POST to a different origin.
+function canonicalRedirectUrl(req, url, canonicalHost) {
+  if (!canonicalHost) return null;
+  const method = req.method || 'GET';
+  if (method !== 'GET' && method !== 'HEAD') return null;
+  if (hostWithoutPort(req.headers.host) !== `www.${canonicalHost}`) return null;
+  // The ingress sets x-forwarded-proto, but it is still a client-supplied header:
+  // allowlist it rather than reflecting an arbitrary scheme into Location.
+  const forwarded = String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim().toLowerCase();
+  const proto = forwarded === 'http' || forwarded === 'https' ? forwarded : 'https';
+  return `${proto}://${canonicalHost}${url.pathname}${url.search}`;
+}
 
 function sendJson(res, status, payload, extraHeaders = {}) {
   const body = JSON.stringify(payload, null, 2);
@@ -304,6 +333,11 @@ export function createApp(repositoryOrStore, options = {}) {
   // surface on the unauthenticated /healthz; the raw key never leaves the server.
   const license = options.license || loadLicenseConfig();
 
+  // Bare canonical hostname ("basemouse.com"), or '' to disable the www redirect.
+  const canonicalHost = String(options.canonicalHost ?? process.env.CANONICAL_HOST ?? '')
+    .trim()
+    .toLowerCase();
+
   // Load the visible corpus for a read request. Anonymous reads survive a
   // Postgres outage by degrading to the seed fallback; authenticated reads
   // surface the registry's 503 (StoreUnavailableError) untouched.
@@ -337,6 +371,12 @@ export function createApp(repositoryOrStore, options = {}) {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const method = req.method || 'GET';
     try {
+      // One authoritative origin for crawlers: www -> bare host, before routing.
+      const canonical = canonicalRedirectUrl(req, url, canonicalHost);
+      if (canonical) {
+        res.writeHead(308, { Location: canonical, ...SECURITY_HEADERS });
+        return res.end();
+      }
 
       // Checkout is the one write endpoint; everything else is read-only.
       if (url.pathname === '/api/checkout') {
@@ -489,7 +529,7 @@ export function createApp(repositoryOrStore, options = {}) {
         return sendJson(res, 200, {
           ok: true,
           service: 'basemouse',
-          version: '0.2.0',
+          version: VERSION,
           documents: seedCount,
           billing: billing.enabled,
           meshai: telemetry.enabled,
