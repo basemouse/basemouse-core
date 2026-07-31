@@ -30,8 +30,7 @@ This is a small zero-dependency Node.js app:
 - Slack Socket Mode connector for local LLM + BaseMouse grounding in `integrations/slack/`
 - Dockerfile plus self-hosted Docker Compose examples in `deployment/compose/` (see `docs/self-hosted.md`)
 - retrieval quality eval harness (`npm run eval:retrieval`) with golden queries in `data/retrieval-eval/`
-- Kubernetes manifests in `k8s/`
-- GitHub Actions workflow for test/build/push/deploy on `main`
+- GitHub Actions workflow for test/build/push on `main`
 
 ## Local development
 
@@ -302,26 +301,26 @@ BILLING_CONTACT_URL     # optional mailto/CRM URL for Enterprise/contact-sales f
 STRIPE_PRICING_TABLE_ID # optional public ID reserved for future pricing table embed
 ```
 
-To take real payments, a hosted operator provisions a Stripe product with
-recurring prices (each tagged with `tier` metadata) and then:
+To take real payments:
 
-1. Set the GitHub repo secrets (`STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER`,
-   `STRIPE_PRICE_TEAM`, `STRIPE_WEBHOOK_SECRET`, optional `STRIPE_PUBLISHABLE_KEY`)
-   with the price IDs from the Stripe account — never commit them to git.
+1. In Stripe, create a product with recurring monthly prices, tagging each price
+   with `tier` metadata (`starter` or `team`). The app matches tiers by that tag,
+   not by price ID order.
 2. Create a webhook endpoint pointing at `/api/stripe/webhook` and copy its
    signing secret into `STRIPE_WEBHOOK_SECRET`.
-3. `CHECKOUT_ENABLED=true` already ships in `k8s/deployment.yaml`; for local dev
-   set it in `.env`.
-4. Verify `/api/billing/config` shows checkout-enabled tiers without exposing
-   secrets, and `/api/stripe/webhook` accepts Stripe test events.
+3. Set the variables above in the server environment along with
+   `CHECKOUT_ENABLED=true`. Never commit them. For local development put the same
+   names in `.env` (see `.env.sample`).
+4. Verify `/api/billing/config` shows checkout-enabled tiers without exposing any
+   secret, and that `/api/stripe/webhook` accepts Stripe test events.
 
-On the deployed cluster, the `basemouse-billing` Secret is materialized by CI: set
-`STRIPE_SECRET_KEY`, `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_TEAM`,
-`STRIPE_PUBLISHABLE_KEY`, and `STRIPE_WEBHOOK_SECRET` as **GitHub repo secrets** and
-the deploy workflow (`.github/workflows/deploy.yml`) syncs them into the
-`basemouse-billing` Secret on every deploy. `CHECKOUT_ENABLED=true` already ships in
-`k8s/deployment.yaml`, so checkout arms automatically once `STRIPE_SECRET_KEY` and at
-least one price ID are present — and degrades to contact-sales if they are absent.
+A restricted key (`rk_…`) is preferred over a secret key. The minimum scopes are
+write on Checkout Sessions and Billing Portal Sessions, plus read on Checkout
+Sessions for the claim verification path.
+
+Checkout arms itself once `STRIPE_SECRET_KEY` and at least one price ID are
+present, and degrades to a contact-sales state when they are absent, so a
+deployment with no Stripe configuration still runs.
 
 ## Seed documents
 
@@ -335,11 +334,10 @@ Each document is normalized by `src/store.js`, gets deterministic provenance met
 
 ## Deployment
 
-The hosted service runs on Kubernetes. Continuous deployment is handled by
-`.github/workflows/deploy.yml`: a runner builds and pushes the image, then
-applies the `k8s/` manifests and rolls out the new revision. Self-hosters can
-deploy the same image with the Docker Compose examples in `deployment/compose/`
-(see `docs/self-hosted.md`).
+The hosted service runs on Kubernetes and deploys continuously from `main`: a
+build pushes the image, migrations run against the production database, and the
+cluster rolls out the new revision. Self-hosters can deploy the same image with
+the Docker Compose examples in `deployment/compose/` (see `docs/self-hosted.md`).
 
 Set `CANONICAL_HOST` to your bare domain (e.g. `example.com`) if you serve the
 same site on both the apex and `www.` hostnames: GET and HEAD requests arriving
