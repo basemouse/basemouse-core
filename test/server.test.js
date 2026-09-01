@@ -6,6 +6,8 @@ import { createApp } from '../src/server.js';
 import { loadBillingConfig } from '../src/billing.js';
 import { loadLicenseConfig } from '../src/license.js';
 import { createSeedRepository } from '../src/store.js';
+import { MemoryStore } from '../src/memory-store.js';
+import { hashKey, generateKey } from '../src/auth.js';
 
 let server;
 let base;
@@ -479,7 +481,7 @@ test('canonical redirect never touches API/MCP writes on the www host', async ()
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
     });
     assert.notEqual(res.status, 308);
-    assert.ok(Array.isArray(JSON.parse(res.raw).result?.tools), 'MCP tools/list must answer on the www host');
+    assert.equal(res.status, 401, 'www host must still serve MCP (401 without a token), never 308');
   });
 });
 
@@ -545,11 +547,25 @@ test('healthz and MCP serverInfo report the package.json version, not a hardcode
   const health = await (await fetch(`${base}/healthz`)).json();
   assert.equal(health.version, version);
 
-  const res = await fetch(`${base}/mcp`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })
-  });
-  const body = await res.json();
-  assert.equal(body.result.serverInfo.version, version);
+  const KEY = generateKey();
+  const store = new MemoryStore(createSeedRepository());
+  await store.createKey({ id: 'ws-ver', plan: 'demo', keyHash: hashKey(KEY) });
+  const app = createApp(store);
+  await new Promise((resolve) => app.listen(0, '127.0.0.1', resolve));
+  try {
+    const { port } = app.address();
+    const res = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        Authorization: `Bearer ${KEY}`
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} })
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.result.serverInfo.version, version);
+  } finally {
+    app.close();
+  }
 });

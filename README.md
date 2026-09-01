@@ -136,13 +136,15 @@ claude mcp add --transport http basemouse https://basemouse.com/mcp \
   --header "Authorization: Bearer bm_..."
 ```
 
-(Omit the header to browse the public demo corpus. OAuth-based hosted
-connectors are not yet supported — config-file clients work today. The
+Unauthenticated POST /mcp returns 401 with WWW-Authenticate so Cursor
+marketplace Connect starts OAuth. Paste an existing bm_ key on the consent
+page, or continue with the public demo. Config-file clients still send
+`Authorization: Bearer bm_...`. REST anonymous demo is unchanged. The
 endpoint is tool-agnostic: `node integrations/cli/basemouse.mjs register`
 prints ready-to-paste MCP config for Claude Code, Cursor, Windsurf, Codex
 CLI, Gemini CLI, Grok CLI, AWS Kiro, and Google Antigravity — and SSE-only
 clients like IBM Bob via the `mcp-remote` bridge, which `basemouse register bob`
-emits.)
+emits.
 
 ### Sync your workspace (any platform, any coding tool)
 

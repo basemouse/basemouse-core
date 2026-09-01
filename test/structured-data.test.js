@@ -127,13 +127,8 @@ test('homepage FAQ markup and FAQPage structured data stay in sync', () => {
   }
 });
 
-test('every sitemap URL is absolute, unique, and resolves to a file that exists', (t) => {
-  const sitemapPath = join(PUBLIC_DIR, 'sitemap.xml');
-  if (!existsSync(sitemapPath)) {
-    t.skip('sitemap.xml is hosted-only and excluded from open-core');
-    return;
-  }
-  const xml = readFileSync(sitemapPath, 'utf8');
+test('every sitemap URL is absolute, unique, and resolves to a file that exists', () => {
+  const xml = readFileSync(join(PUBLIC_DIR, 'sitemap.xml'), 'utf8');
 
   // Structural check, not a full XML parse (no parser dependency): every <url>
   // must carry exactly one <loc>, and every <loc> must point at a file we
@@ -176,12 +171,6 @@ test('the comparison page is published, discoverable, and marked up', () => {
   // Discovery surfaces: a comparison page nothing links to is a page no crawler
   // finds. All three must list it.
   assert.match(readPage('index.html'), /href="\/compare\.html"/);
-  const sitemapPath = join(PUBLIC_DIR, 'sitemap.xml');
-  if (existsSync(sitemapPath)) {
-    assert.match(readFileSync(sitemapPath, 'utf8'), /https:\/\/basemouse\.com\/compare\.html/);
-  }
-  const llmsPath = join(PUBLIC_DIR, 'llms.txt');
-  if (existsSync(llmsPath)) {
-    assert.match(readFileSync(llmsPath, 'utf8'), /https:\/\/basemouse\.com\/compare\.html/);
-  }
+  assert.match(readFileSync(join(PUBLIC_DIR, 'sitemap.xml'), 'utf8'), /https:\/\/basemouse\.com\/compare\.html/);
+  assert.match(readFileSync(join(PUBLIC_DIR, 'llms.txt'), 'utf8'), /https:\/\/basemouse\.com\/compare\.html/);
 });
