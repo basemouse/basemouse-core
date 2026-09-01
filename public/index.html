@@ -18,6 +18,178 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <!--
+      Structured data. Not an executable script: CSP `script-src 'self'` does not
+      apply to non-JavaScript MIME types, and the no-inline-script invariant is
+      about executable code. Prices here mirror src/billing.js TIERS and are
+      pinned by test/structured-data.test.js — edit the tier, not this block.
+    -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://basemouse.com/#organization",
+      "name": "BaseMouse",
+      "url": "https://basemouse.com/",
+      "logo": "https://basemouse.com/og.png",
+      "email": "devsupport@basemouse.com",
+      "description": "BaseMouse gives AI agents one shared, versioned memory across tools, served as cited, checksummed context packs over HTTP and MCP.",
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "MeshAI Labs",
+        "url": "https://meshai.dev"
+      },
+      "sameAs": [
+        "https://github.com/basemouse",
+        "https://github.com/basemouse/basemouse-core",
+        "https://glama.ai/mcp/servers/basemouse/basemouse-core",
+        "https://mcpservers.org/servers/basemouse-com"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://basemouse.com/#website",
+      "url": "https://basemouse.com/",
+      "name": "BaseMouse",
+      "publisher": { "@id": "https://basemouse.com/#organization" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://basemouse.com/#software",
+      "name": "BaseMouse",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "AI agent memory and context layer",
+      "operatingSystem": "Any (HTTP API and MCP server; self-hosted core requires Node.js 24+)",
+      "url": "https://basemouse.com/",
+      "publisher": { "@id": "https://basemouse.com/#organization" },
+      "license": "https://opensource.org/licenses/MIT",
+      "softwareHelp": "https://github.com/basemouse/basemouse-core/blob/master/docs/getting-started.md",
+      "description": "One shared memory for AI agents across Claude Code, Cursor, Codex and Grok. A single MCP server and HTTP API return grounded context packs where every entry carries a citation, a checksum, and full version history. Open source at the core.",
+      "featureList": [
+        "Model Context Protocol server at POST /mcp",
+        "Cited, checksummed basemouse.context_pack.v1 bundles",
+        "Hybrid retrieval: lexical, graph expansion, local offline vectors",
+        "Append-only version history on every document",
+        "Agent write-back via upsert_document",
+        "MIT-licensed self-hostable core"
+      ],
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Open Source",
+          "price": "0",
+          "priceCurrency": "USD",
+          "url": "https://github.com/basemouse/basemouse-core",
+          "description": "Run the MIT-licensed core yourself — free, no card."
+        },
+        {
+          "@type": "Offer",
+          "name": "Starter",
+          "price": "29",
+          "priceCurrency": "USD",
+          "url": "https://basemouse.com/#pricing",
+          "description": "Ground a single agent in trusted, cited context.",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "29",
+            "priceCurrency": "USD",
+            "billingDuration": 1,
+            "unitText": "MONTH"
+          }
+        },
+        {
+          "@type": "Offer",
+          "name": "Team",
+          "price": "99",
+          "priceCurrency": "USD",
+          "url": "https://basemouse.com/#pricing",
+          "description": "Govern an agent fleet on a shared knowledge substrate.",
+          "priceSpecification": {
+            "@type": "UnitPriceSpecification",
+            "price": "99",
+            "priceCurrency": "USD",
+            "billingDuration": 1,
+            "unitText": "MONTH"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://basemouse.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does BaseMouse actually do?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It is a place to store the documents your AI agents read from. You import your docs, your agent asks a question over one API call, and it gets back the most relevant passages with a source on each one. Every change to every document is kept on the record, so you can always check where an answer came from."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is this different from a vector database or building RAG myself?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A vector database gives you one ingredient. BaseMouse is the finished dish: import, search, citations, tamper-proof fingerprints, and full change history behind a single endpoint. No pipeline to build, no SDK to install, nothing to keep in sync."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What can I import?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Folders of markdown today. Labels in your files are kept and made searchable, and re-importing is always safe: no duplicates, and a clear report if a file does not go through. Docs can also stay in sync on their own: a GitHub Action pushes a repo's agent docs on every push, and a small cross-platform CLI syncs a whole projects folder, or watches it and pushes the moment you save."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do you train AI models on my documents?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. BaseMouse stores your documents and serves passages back to your own agents. That is the whole job. Our operational telemetry never includes document contents, and if you self-host the core, your docs never leave your servers at all."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I run it myself?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The core engine is MIT-licensed and self-hostable, with no license key and nothing phoning home. The paid hosted version adds the running, billing, and support."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do my agents connect?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "One HTTP call, from any language or agent framework. The demo needs no key at all, and your own docs need one header. BaseMouse also speaks the Model Context Protocol at POST /mcp, so agents like Claude Code, Cursor, Codex CLI, Gemini CLI, and Grok CLI connect directly, with the same search and get_context_pack tools plus upsert_document, the same auth, and the same quota."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can agents write to it, or only read?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Both. Reading is the common case, grounded and cited context packs, but agents can also persist notes and decisions by stable id via the API or the upsert_document MCP tool. Every write is a versioned, append-only revision, so it doubles as durable agent memory across sessions without ever losing history."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does my context follow me across tools?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Point each tool at BaseMouse once, and every one of them, Claude Code, Cursor, Codex, Grok, and more, reads the same grounded context. Anything an agent writes back is immediately readable by an agent in a different tool, even a different vendor. The live chat inside each tool stays local to it: BaseMouse is the shared knowledge and memory layer, not a transcript-sync service."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
@@ -47,6 +219,7 @@
           <a href="#api">api</a>
           <a href="#pricing">pricing</a>
           <a href="#open-core">open source</a>
+          <a href="/compare.html">compare</a>
           <a href="#faq">faq</a>
           <a href="https://github.com/basemouse/basemouse-core">docs</a>
         </nav>
@@ -320,7 +493,7 @@
 
       <footer class="colophon">
         <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
-        <span class="colophon-mid">roadmap: change webhooks · <a href="/blog/">guides</a> · <a href="https://github.com/basemouse/basemouse-core">docs</a> · <a href="/terms.html">terms</a> · <a href="/privacy.html">privacy</a> · <a href="mailto:devsupport@basemouse.com?subject=BaseMouse">contact</a></span>
+        <span class="colophon-mid">roadmap: change webhooks · <a href="/blog/">guides</a> · <a href="/compare.html">alternatives</a> · <a href="https://github.com/basemouse/basemouse-core">docs</a> · <a href="/terms.html">terms</a> · <a href="/privacy.html">privacy</a> · <a href="mailto:devsupport@basemouse.com?subject=BaseMouse">contact</a></span>
         <span>NO BLACK BOXES. NO SILENT EDITS.</span>
       </footer>
     </div>

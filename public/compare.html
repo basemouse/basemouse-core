@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BaseMouse alternatives: how it compares</title>
+    <meta
+      name="description"
+      content="BaseMouse vs per-tool memory files, vs a vector database you wire up yourself, vs a managed RAG API, vs a generic memory MCP server. What each is good at, where BaseMouse differs, and when not to use it."
+    />
+    <link rel="canonical" href="https://basemouse.com/compare.html" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#0b0b09" />
+    <meta property="og:title" content="BaseMouse alternatives: how it compares" />
+    <meta property="og:description" content="BaseMouse vs CLAUDE.md and per-tool rules files, vs vector databases, vs managed RAG APIs, vs memory MCP servers — including where BaseMouse is the wrong tool." />
+    <meta property="og:image" content="https://basemouse.com/og.png" />
+    <meta property="og:url" content="https://basemouse.com/compare.html" />
+    <meta property="og:type" content="article" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500;62..125,800;62..125,900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://basemouse.com/compare.html#webpage",
+      "url": "https://basemouse.com/compare.html",
+      "name": "BaseMouse alternatives: how it compares",
+      "description": "How BaseMouse compares to per-tool memory files, self-assembled vector-database RAG, managed RAG APIs, generic memory MCP servers, and human wikis — including where BaseMouse is the wrong tool.",
+      "inLanguage": "en",
+      "isPartOf": { "@id": "https://basemouse.com/#website" },
+      "about": { "@id": "https://basemouse.com/#software" },
+      "publisher": { "@id": "https://basemouse.com/#organization" }
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://basemouse.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Alternatives and comparison", "item": "https://basemouse.com/compare.html" }
+      ]
+    },
+    {
+      "@type": "ItemList",
+      "@id": "https://basemouse.com/compare.html#alternatives",
+      "name": "Alternatives to BaseMouse",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Per-tool memory files (CLAUDE.md, Cursor rules, AGENTS.md)" },
+        { "@type": "ListItem", "position": 2, "name": "A vector database you assemble into RAG yourself" },
+        { "@type": "ListItem", "position": 3, "name": "A managed RAG or chat-with-your-docs API" },
+        { "@type": "ListItem", "position": 4, "name": "A generic memory MCP server" },
+        { "@type": "ListItem", "position": 5, "name": "A human wiki or docs site" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://basemouse.com/compare.html#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the best alternative to keeping a CLAUDE.md per project?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If one tool and one file cover you, keep the file. The alternative matters once you use more than one agent tool: a per-tool file is read only by that tool, so Cursor cannot see what Claude Code learned. BaseMouse replaces the copies with one MCP endpoint every tool reads and writes, and keeps a version history of each change."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is BaseMouse a vector database?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. A vector database stores embeddings and returns nearest neighbours; you still build chunking, ingestion, citation, and versioning around it. BaseMouse is the assembled layer: import, hybrid retrieval, citations, checksums, and append-only history behind one endpoint. Its vector step runs locally in Node with hashed-feature embeddings, so there is no external vector service and no embedding API call."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does BaseMouse compare to a managed RAG API?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Both save you from building a pipeline. The things to compare are provenance and portability: whether every returned passage carries a source, a version, and a checksum you can verify; whether you can read the full edit history; and whether you can run the same engine yourself. The BaseMouse core is MIT-licensed and self-hostable, so the exit path does not depend on the vendor."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is BaseMouse different from a memory MCP server?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Many memory servers model a scratchpad: the agent saves a note and reads it back. BaseMouse models a repository. Writes are versioned, append-only revisions addressed by stable id, reads return cited and checksummed context packs, and nothing is silently overwritten. Ask of any memory server whether you can answer, six weeks later, what the agent was told and when it changed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "When should you not use BaseMouse?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If you work in a single tool and one rules file is enough, you do not need it yet. It does not sync chat transcripts between tools. It is not a general-purpose vector database for arbitrary embeddings. Import is folders of markdown today, so other source formats need the design partner track first."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="BaseMouse home">
+          <svg class="logo-mark" viewBox="0 0 64 64" width="30" height="30" aria-hidden="true" focusable="false">
+            <rect x="2" y="2" width="60" height="60" rx="10" fill="#121310" />
+            <rect x="3" y="3" width="58" height="58" rx="9" fill="none" stroke="#3a3b33" />
+            <path d="M16 39C3 30 6 11 27 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" />
+            <path d="M17 54V35c0-14 13-24 27-18" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M42 18c6 3 11 7 17 16l-10 8" fill="none" stroke="#ffb000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="42" cy="20" r="8" fill="#0b0b09" stroke="#ffb000" stroke-width="6" />
+            <circle cx="49" cy="31" r="3.2" fill="#9acd32" />
+          </svg>
+          <span>BASE<b>MOUSE</b></span>
+        </a>
+        <span class="live-status" role="status" aria-live="polite">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="live-text">comparison</span>
+        </span>
+        <nav class="topnav" aria-label="Primary navigation">
+          <a href="#alternatives">options</a>
+          <a href="#wrong-tool">limits</a>
+          <a href="#faq">faq</a>
+          <a href="https://github.com/basemouse/basemouse-core">docs</a>
+        </nav>
+        <a class="btn primary topbar-cta" href="/#pricing">Get your key</a>
+      </header>
+
+      <main id="main">
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="spec-strip" aria-label="Document metadata">
+              <span>UNIT: COMPARISON</span>
+              <span>REV: <b>2026-07-31</b></span>
+              <span>STORE: <b>HONEST</b></span>
+            </p>
+            <h1 aria-label="What people use instead.">WHAT PEOPLE USE <span class="hl">INSTEAD</span>.</h1>
+            <p class="sub">
+              The five real BaseMouse alternatives, what each one is genuinely good at, and
+              the one question that separates them. No feature-matrix theatre, no competitor
+              scoreboard we control the pen on. <b>The section at the bottom lists the cases where
+              BaseMouse is the wrong tool</b>, because you will find those out anyway.
+            </p>
+            <div class="cta-row" aria-label="Calls to action">
+              <a class="btn primary" href="#alternatives">Read the comparison</a>
+              <a class="btn ghost" href="/#terminal">Run the live demo</a>
+            </div>
+          </div>
+
+          <div class="term" aria-label="The separating question">
+            <div class="term-bar">
+              <i></i><i></i><i></i>
+              <span>the question that separates them</span>
+            </div>
+            <div class="term-body" role="log" aria-label="Comparison criteria">
+              <span class="p">$</span> <span class="o">curl -s "$BASEMOUSE/api/context-pack?q=rollback" | jq '.entries[0]'</span>
+              <pre aria-label="A context pack entry">
+{
+  "id": "runbook-rollback",
+  "title": "Rollback procedure",
+  "version": 7,
+  "citation": { "label": "[runbook-rollback] Rollback procedure v7",
+                "source": "docs/runbook.md",
+                "checksum": "sha256:4f1c…" },
+  "retrieval": { "signals": ["lexical", "graph", "vector"] }
+}</pre>
+              <pre aria-label="The question every alternative has to answer"># six weeks later, the same question, answerable:
+# what did the agent read, which revision, and did it change?</pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="caps" id="alternatives" aria-label="Alternatives compared">
+          <div class="caps-head"><span>alternatives</span><span>what it is good at · where basemouse differs</span></div>
+
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/01</span>
+            <h2 aria-label="Per-tool memory files">PER-TOOL MEMORY FILES</h2>
+            <p>
+              A <code>CLAUDE.md</code>, a Cursor rules file, an <code>AGENTS.md</code>. Genuinely
+              good: they are free, they live in the repo, they diff in code review, and for one
+              tool on one project they are hard to beat. The ceiling is that each file is read by
+              the tool it belongs to. Add a second tool and you are hand-syncing prose, and neither
+              tool can read what the other one worked out yesterday. BaseMouse keeps one store that
+              every tool reads and writes through a single MCP endpoint, with each edit kept as its
+              own revision rather than overwritten in place.
+            </p>
+            <div class="stat"><b>PER TOOL</b>memory scope</div>
+          </div>
+
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/02</span>
+            <h2 aria-label="A vector database you wire up yourself">A VECTOR DB YOU WIRE UP</h2>
+            <p>
+              pgvector, Chroma, Pinecone and friends. Genuinely good: maximum control, your choice
+              of embedding model, and the right answer when retrieval quality is the product you
+              are building. What you are signing up for is the rest of the pipeline — chunking,
+              ingestion, re-embedding on change, citation plumbing, and version history — plus
+              keeping it in sync forever. BaseMouse ships that assembly. Its vector step is local,
+              computed in Node with hashed features, so there is no external vector service and no
+              embedding API in the path; retrieval blends it with lexical overlap and one-hop graph
+              expansion, and each result says which signal surfaced it.
+            </p>
+            <div class="stat"><b>DIY</b>you own the pipeline</div>
+          </div>
+
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/03</span>
+            <h2 aria-label="A managed RAG API">A MANAGED RAG API</h2>
+            <p>
+              Upload docs, get answers. Genuinely good: fastest path from zero to a working
+              retrieval feature, and the operational load is someone else's. The comparison worth
+              running is not feature counts, it is what comes back with each passage. Ask whether
+              you get a source, a version, and a checksum you can verify yourself; whether the full
+              edit history is readable; and what your exit looks like. BaseMouse answers those with
+              a checksum on every entry and an MIT-licensed core you can run on your own servers,
+              so leaving is a redeploy rather than a migration project.
+            </p>
+            <div class="stat"><b>VERIFY</b>ask for provenance</div>
+          </div>
+
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/04</span>
+            <h2 aria-label="A generic memory MCP server">A GENERIC MEMORY MCP SERVER</h2>
+            <p>
+              The closest neighbour, and the comparison most worth doing carefully. Genuinely good:
+              an agent saves a note, reads it back later, and that alone removes a lot of repeated
+              explaining. The distinction is scratchpad versus repository. BaseMouse writes are
+              versioned, append-only revisions addressed by a stable id, so an
+              <code>upsert_document</code> that changes nothing writes nothing and one that does
+              never destroys what was there before. Reads come back as cited, checksummed context
+              packs. The test to apply to any candidate: six weeks from now, can you say what the
+              agent was told, which revision it read, and when that changed?
+            </p>
+            <div class="stat"><b>RECORD</b>not a scratchpad</div>
+          </div>
+
+          <div class="cap">
+            <span class="idx" aria-hidden="true">/05</span>
+            <h2 aria-label="A wiki or docs site">A WIKI OR DOCS SITE</h2>
+            <p>
+              Notion, Confluence, an internal docs site. Genuinely good, and mostly not a
+              competitor: this is where humans write things down, and it should stay that way.
+              They are built for people reading pages, so an agent pointed at one gets whole
+              documents and a general-purpose API rather than the specific passages that answer its
+              question with a source attached. The two compose — humans author in the wiki,
+              agents read a context pack.
+            </p>
+            <div class="stat"><b>HUMANS</b>different reader</div>
+          </div>
+        </section>
+
+        <section class="opencore" id="wrong-tool" aria-label="When BaseMouse is the wrong tool">
+          <p class="spec-strip">
+            <span>WHERE IT DOES NOT FIT</span>
+            <span>SAVE YOURSELF THE TRIAL</span>
+          </p>
+          <h2 aria-label="When BaseMouse is the wrong tool.">WHEN IT IS THE WRONG TOOL.</h2>
+          <p class="sub">
+            <b>One tool, one file.</b> If you work entirely in one agent and a single rules file
+            covers the project, that file is doing the job. Come back when there is a second tool
+            or a second person.<br /><br />
+            <b>You want chat history synced.</b> BaseMouse is the shared knowledge and memory
+            layer, not a transcript-sync service. The live conversation inside each tool stays
+            local to it.<br /><br />
+            <b>You want a general-purpose vector database.</b> Retrieval here is deliberately
+            local and hashed-feature; it is not a place to put arbitrary embeddings for arbitrary
+            workloads.<br /><br />
+            <b>Your sources are not markdown yet.</b> Import is folders of markdown today, with
+            GitHub Action and CLI sync on top. Other source types are exactly what the design
+            partner track exists to work through, so start there rather than with a plan.
+          </p>
+          <div class="cta-row" aria-label="Next steps">
+            <a class="btn primary" href="/#pricing">Get your key</a>
+            <a class="btn ghost" href="/design-partner.html">Design partner intake</a>
+            <a class="btn ghost" href="https://github.com/basemouse/basemouse-core">Read the core on GitHub</a>
+          </div>
+        </section>
+
+        <section class="faq" id="faq" aria-label="Comparison questions">
+          <p class="spec-strip">
+            <span>FAQ</span>
+            <span>PLAIN ANSWERS</span>
+          </p>
+          <h2 aria-label="Comparison questions, answered.">COMPARISON QUESTIONS.</h2>
+          <details>
+            <summary>What is the best alternative to keeping a CLAUDE.md per project?</summary>
+            <p>
+              If one tool and one file cover you, keep the file. The alternative starts to matter
+              once you use more than one agent tool: a per-tool file is read only by that tool, so
+              Cursor cannot see what Claude Code worked out. BaseMouse replaces the copies with one
+              MCP endpoint every tool reads and writes, and keeps a version history of each change.
+            </p>
+          </details>
+          <details>
+            <summary>Is BaseMouse a vector database?</summary>
+            <p>
+              No. A vector database stores embeddings and returns nearest neighbours; you still
+              build chunking, ingestion, citation, and versioning around it. BaseMouse is the
+              assembled layer: import, hybrid retrieval, citations, checksums, and append-only
+              history behind one endpoint. The vector step runs locally in Node with
+              hashed-feature embeddings, so there is no external vector service and no embedding
+              API call in the path.
+            </p>
+          </details>
+          <details>
+            <summary>How does BaseMouse compare to a managed RAG API?</summary>
+            <p>
+              Both save you from building a pipeline. What is worth comparing is provenance and
+              portability: whether every returned passage carries a source, a version, and a
+              checksum you can verify; whether the full edit history is readable; and whether you
+              can run the same engine yourself. The BaseMouse core is
+              <a href="https://github.com/basemouse/basemouse-core">MIT-licensed and self-hostable</a>,
+              so the exit path does not depend on us.
+            </p>
+          </details>
+          <details>
+            <summary>How is BaseMouse different from a memory MCP server?</summary>
+            <p>
+              Many memory servers model a scratchpad: the agent saves a note and reads it back.
+              BaseMouse models a repository. Writes are versioned, append-only revisions addressed
+              by stable id, reads return cited and checksummed context packs, and nothing is
+              silently overwritten. Apply one test to any candidate: six weeks later, can you say
+              what the agent was told and when it changed?
+            </p>
+          </details>
+          <details>
+            <summary>When should you not use BaseMouse?</summary>
+            <p>
+              If you work in a single tool and one rules file is enough, you do not need it yet.
+              It does not sync chat transcripts between tools. It is not a general-purpose vector
+              database for arbitrary embeddings. Import is folders of markdown today, so other
+              source formats go through the <a href="/design-partner.html">design partner</a>
+              track first.
+            </p>
+          </details>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        <span>BASEMOUSE // <a href="https://meshai.dev">MESHAI LABS</a></span>
+        <span class="colophon-mid"><a href="/">home</a> · <a href="/blog/">guides</a> · <a href="/design-partner.html">design partner</a> · <a href="https://github.com/basemouse/basemouse-core">repo</a> · <a href="/terms.html">terms</a> · <a href="/privacy.html">privacy</a></span>
+        <span>NO BLACK BOXES. NO SILENT EDITS.</span>
+      </footer>
+    </div>
+  </body>
+</html>

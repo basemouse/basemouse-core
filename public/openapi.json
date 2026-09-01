@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "BaseMouse API",
-    "version": "0.3.1",
+    "version": "0.3.2",
     "description": "Context infrastructure for AI agents: import your docs, pull cited, checksummed context packs, audit the append-only record. Authenticate with `Authorization: Bearer bm_...`; anonymous reads see the public demo corpus. An MCP endpoint exposing the same tools lives at POST /mcp (JSON-RPC, Streamable HTTP, stateless)."
   },
   "servers": [

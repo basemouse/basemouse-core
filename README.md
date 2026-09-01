@@ -26,6 +26,11 @@ This is a small zero-dependency Node.js app:
   lexical vs hybrid retrieval-quality baseline
 - public Design Partner Intake page at `/design-partner.html`, asking for one
   small real corpus, real questions, and a concrete agent workflow to benchmark
+- public alternatives/comparison page at `/compare.html`, covering the five
+  things people use instead of BaseMouse and where BaseMouse is the wrong tool
+- JSON-LD structured data (Organization, WebSite, SoftwareApplication, FAQPage)
+  on the homepage, pinned to `src/billing.js` and the visible FAQ by
+  `test/structured-data.test.js` so the markup cannot drift from the product
 - lightweight JavaScript and Python API clients in `clients/` (see `docs/client-libraries.md`)
 - Slack Socket Mode connector for local LLM + BaseMouse grounding in `integrations/slack/`
 - Dockerfile plus self-hosted Docker Compose examples in `deployment/compose/` (see `docs/self-hosted.md`)
@@ -48,6 +53,7 @@ Open:
 http://localhost:3000
 http://localhost:3000/agent-governance-demo.html
 http://localhost:3000/design-partner.html
+http://localhost:3000/compare.html
 ```
 
 Useful endpoints:
