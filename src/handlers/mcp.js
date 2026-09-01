@@ -6,15 +6,13 @@
 // new dependencies; every response is a single JSON message (the spec's
 // stateless mode).
 //
-// Auth mirrors REST: `Authorization: Bearer bm_...` scopes the visible
-// workspaces; anonymous clients see the public demo corpus. Authenticated
-// get_context_pack calls meter against the plan's monthly pack quota exactly
-// like the REST endpoint — same product, second door.
-//
-// Known compat boundary (design doc OV-E #13): config-file clients (Claude
-// Code, Cursor, anything speaking plain Streamable HTTP with custom headers)
-// work today; hosted connectors that require OAuth are out of scope until
-// real demand. Verified handshake shape against MCP protocol rev 2025-03-26.
+// Auth: `Authorization: Bearer bm_...` scopes the visible workspaces.
+// Hosted MCP now uses OAuth 2.1 (consent wraps existing bm_ key).
+// Unauthenticated POST /mcp is 401 with WWW-Authenticate so Cursor
+// marketplace Connect starts OAuth. REST anonymous demo is unchanged.
+// Authenticated get_context_pack calls meter against the plan's monthly
+// pack quota exactly like the REST endpoint.
+// Verified handshake shape against MCP protocol rev 2025-03-26.
 
 import { createContextPack, searchRepository, filterItems, validateQuery, validateFacet, resolveLimit } from '../basemouse-core.js';
 import { hybridSearchWithVectors, validateRetrieval, vectorRetrievalInfo } from '../retrieval.js';

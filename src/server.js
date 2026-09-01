@@ -10,7 +10,7 @@ import { VERSION } from './version.js';
 import { MemoryStore } from './memory-store.js';
 import { PgStore } from './pg-store.js';
 import { resolveKey, visibleWorkspaces } from './auth.js';
-import { StoreUnavailableError, toResponse } from './errors.js';
+import { StoreUnavailableError, UnauthorizedError, toResponse } from './errors.js';
 import {
   MAX_DOC_BODY_BYTES,
   createDocumentHandler,
@@ -23,6 +23,21 @@ import {
 import { claimKeyHandler, portalHandler, rotateKeyHandler, usageHandler } from './handlers/keys.js';
 import { stripeWebhookHandler } from './handlers/stripe-webhook.js';
 import { handleMcpRequest } from './handlers/mcp.js';
+import {
+  OauthStore,
+  issuerFromRequest,
+  wwwAuthenticate,
+  protectedResourceMetadata,
+  authorizationServerMetadata,
+  parseAuthorizeParams,
+  validateAuthorizeParams,
+  issueCode,
+  exchangeCode,
+  resolveConsentKey,
+  redirectWithCode,
+  readFormBody
+} from './oauth.js';
+import { renderConsent, renderAuthorizeError } from './handlers/oauth-page.js';
 import { createMetrics, runAlertChecks } from './metrics.js';
 import {
   renderAlreadyClaimed,
@@ -332,6 +347,7 @@ export function createApp(repositoryOrStore, options = {}) {
   // local/dev runs as "open"). publicLicenseStatus() is non-secret and safe to
   // surface on the unauthenticated /healthz; the raw key never leaves the server.
   const license = options.license || loadLicenseConfig();
+  const oauth = options.oauth || new OauthStore();
 
   // Bare canonical hostname ("basemouse.com"), or '' to disable the www redirect.
   const canonicalHost = String(options.canonicalHost ?? process.env.CANONICAL_HOST ?? '')
@@ -399,13 +415,120 @@ export function createApp(repositoryOrStore, options = {}) {
         return sendJson(res, result.status, result.body);
       }
 
+
+      if (url.pathname === '/.well-known/oauth-protected-resource'
+          || url.pathname === '/.well-known/oauth-protected-resource/mcp') {
+        if (method !== 'GET' && method !== 'HEAD') return sendJson(res, 405, { error: 'method_not_allowed', allow: 'GET, HEAD' });
+        return sendJson(res, 200, protectedResourceMetadata(issuerFromRequest(req)));
+      }
+      if (url.pathname === '/.well-known/oauth-authorization-server') {
+        if (method !== 'GET' && method !== 'HEAD') return sendJson(res, 405, { error: 'method_not_allowed', allow: 'GET, HEAD' });
+        return sendJson(res, 200, authorizationServerMetadata(issuerFromRequest(req)));
+      }
+      if (url.pathname === '/oauth/register') {
+        if (method !== 'POST') return sendJson(res, 405, { error: 'method_not_allowed', allow: 'POST' });
+        const body = await readJsonBody(req);
+        if (!body.ok) return sendJson(res, body.status, body.payload);
+        const redirectUris = Array.isArray(body.value.redirect_uris) ? body.value.redirect_uris.filter((u) => typeof u === 'string') : [];
+        if (redirectUris.length === 0) {
+          return sendJson(res, 400, { error: 'invalid_client_metadata', message: 'redirect_uris is required' });
+        }
+        const client = oauth.registerClient({
+          redirectUris,
+          clientName: typeof body.value.client_name === 'string' ? body.value.client_name : 'mcp-client'
+        });
+        return sendJson(res, 201, {
+          client_id: client.clientId,
+          client_name: client.clientName,
+          redirect_uris: client.redirectUris,
+          grant_types: ['authorization_code'],
+          token_endpoint_auth_method: 'none',
+          code_challenge_methods: ['S256']
+        });
+      }
+      if (url.pathname === '/oauth/token') {
+        if (method !== 'POST') return sendJson(res, 405, { error: 'method_not_allowed', allow: 'POST' });
+        const contentType = req.headers['content-type'] || '';
+        let fields;
+        if (contentType.includes('application/json')) {
+          const body = await readJsonBody(req);
+          if (!body.ok) return sendJson(res, body.status, body.payload);
+          fields = body.value;
+        } else {
+          const body = await readFormBody(req);
+          if (!body.ok) return sendJson(res, body.status, body.payload);
+          fields = body.value;
+        }
+        if (fields.grant_type !== 'authorization_code') {
+          return sendJson(res, 400, { error: 'unsupported_grant_type', message: 'grant_type must be authorization_code' });
+        }
+        const result = await exchangeCode(oauth, {
+          code: fields.code,
+          verifier: fields.code_verifier,
+          redirectUri: fields.redirect_uri,
+          clientId: fields.client_id
+        });
+        if (result.error) return sendJson(res, 400, result);
+        return sendJson(res, 200, result);
+      }
+      if (url.pathname === '/oauth/authorize') {
+        const contentType = req.headers['content-type'] || '';
+        let fields = Object.fromEntries(url.searchParams.entries());
+        if (method === 'POST') {
+          let posted;
+          if (contentType.includes('application/json')) {
+            const body = await readJsonBody(req);
+            if (!body.ok) return sendJson(res, body.status, body.payload);
+            posted = body.value;
+          } else {
+            const body = await readFormBody(req);
+            if (!body.ok) return sendJson(res, body.status, body.payload);
+            posted = body.value;
+          }
+          fields = { ...fields, ...posted };
+        } else if (method !== 'GET' && method !== 'HEAD') {
+          return sendJson(res, 405, { error: 'method_not_allowed', allow: 'GET, HEAD, POST' });
+        }
+        const params = parseAuthorizeParams(fields);
+        const client = oauth.getClient(params.clientId);
+        const invalid = validateAuthorizeParams(params, client);
+        if (invalid) return sendHtml(res, 400, renderAuthorizeError(invalid));
+        if (method === 'GET' || method === 'HEAD') {
+          return sendHtml(res, 200, renderConsent({ params: fields }));
+        }
+        const demo = fields.intent === 'demo';
+        const consented = await resolveConsentKey(store, fields.api_key, { demo });
+        if (!consented.ok) {
+          return sendHtml(res, 200, renderConsent({ params: fields, error: consented.message }));
+        }
+        const code = await issueCode(oauth, { params, accessToken: consented.accessToken, demo });
+        res.writeHead(302, { Location: redirectWithCode(params.redirectUri, code, params.state), ...SECURITY_HEADERS });
+        return res.end();
+      }
+
       // MCP: the second door to the same product — JSON-RPC over Streamable
       // HTTP, stateless, same auth/scoping/metering as REST.
       if (url.pathname === '/mcp') {
         if (method !== 'POST') {
           return sendJson(res, 405, { error: 'method_not_allowed', allow: 'POST', message: 'stateless MCP: POST JSON-RPC messages; no SSE stream' });
         }
-        const auth = await resolveKey(req, store);
+        const issuer = issuerFromRequest(req);
+        const authHeaders = { 'WWW-Authenticate': wwwAuthenticate(issuer) };
+        let auth;
+        try {
+          auth = await resolveKey(req, store);
+        } catch (error) {
+          if (error instanceof UnauthorizedError) {
+            return sendJson(res, 401, { error: error.code, message: error.message }, authHeaders);
+          }
+          throw error;
+        }
+        if (!auth) {
+          return sendJson(res, 401, {
+            error: 'unauthorized',
+            message: 'a valid API key is required (Authorization: Bearer bm_...)'
+          }, authHeaders);
+        }
         const rate = checkReadRate(req, auth);
         if (rate) return sendJson(res, 429, { error: 'rate_limited' }, { 'Retry-After': String(rate.retryAfterSec) });
         // MCP now carries document writes (upsert_document), so the body cap

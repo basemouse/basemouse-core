@@ -52,7 +52,7 @@ const rpc = (payload, headers = {}) =>
 const authed = { Authorization: `Bearer ${KEY}` };
 
 test('initialize: protocol version, tools capability, server identity, instructions', async () => {
-  const res = await rpc({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test' } } });
+  const res = await rpc({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test' } } }, authed);
   assert.equal(res.status, 200);
   const body = await res.json();
   assert.equal(body.jsonrpc, '2.0');
@@ -64,12 +64,12 @@ test('initialize: protocol version, tools capability, server identity, instructi
 });
 
 test('notifications/initialized is acknowledged with 202 and no body', async () => {
-  const res = await rpc({ jsonrpc: '2.0', method: 'notifications/initialized' });
+  const res = await rpc({ jsonrpc: '2.0', method: 'notifications/initialized' }, authed);
   assert.equal(res.status, 202);
 });
 
 test('ping returns an empty result (mandatory base-protocol utility; Gemini CLI health-checks with it)', async () => {
-  const res = await rpc({ jsonrpc: '2.0', id: 42, method: 'ping' });
+  const res = await rpc({ jsonrpc: '2.0', id: 42, method: 'ping' }, authed);
   const body = await res.json();
   assert.equal(res.status, 200);
   assert.equal(body.id, 42);
@@ -78,7 +78,7 @@ test('ping returns an empty result (mandatory base-protocol utility; Gemini CLI 
 });
 
 test('tools/list exposes search, get_context_pack, and upsert_document with input schemas', async () => {
-  const res = await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+  const res = await rpc({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, authed);
   const body = await res.json();
   const names = body.result.tools.map((t) => t.name).sort();
   assert.deepEqual(names, ['get_context_pack', 'search', 'upsert_document']);
@@ -93,9 +93,8 @@ test('upsert_document: anonymous callers cannot write', async () => {
     jsonrpc: '2.0', id: 20, method: 'tools/call',
     params: { name: 'upsert_document', arguments: { id: 'agent-memo', title: 'Memo', body: 'hello' } }
   });
-  const body = await res.json();
-  assert.equal(body.result.isError, true);
-  assert.match(body.result.content[0].text, /API key/);
+  assert.equal(res.status, 401);
+  assert.match(res.headers.get('www-authenticate') || '', /resource_metadata=/);
 });
 
 test('upsert_document: create → unchanged → updated round trip with versioning', async () => {
@@ -126,11 +125,10 @@ test('upsert_document: create → unchanged → updated round trip with versioni
   assert.deepEqual(doc.tags, ['session', 'verified']);
 });
 
-test('tools/call search: anonymous sees only the public corpus', async () => {
+test('tools/call search: unauthenticated /mcp is 401 so Cursor starts OAuth', async () => {
   const res = await rpc({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'search', arguments: { query: 'zebra-protocol failover' } } });
-  const body = await res.json();
-  const payload = JSON.parse(body.result.content[0].text);
-  assert.ok(!payload.results.some((r) => r.id === 'private-runbook'), 'private docs never leak to anonymous MCP clients');
+  assert.equal(res.status, 401);
+  assert.match(res.headers.get('www-authenticate') || '', /oauth-protected-resource/);
 });
 
 test('tools/call search: bearer key reaches its own workspace', async () => {
@@ -161,7 +159,7 @@ test('tools/call get_context_pack supports retrieval=hybrid, matching REST featu
   const res = await rpc({
     jsonrpc: '2.0', id: 21, method: 'tools/call',
     params: { name: 'get_context_pack', arguments: { query: 'memory', retrieval: 'hybrid', limit: 10 } }
-  });
+  }, authed);
   const body = await res.json();
   const pack = JSON.parse(body.result.content[0].text);
   assert.equal(pack.retrieval.mode, 'hybrid');
@@ -169,12 +167,12 @@ test('tools/call get_context_pack supports retrieval=hybrid, matching REST featu
 });
 
 test('tools/call rejects an invalid retrieval value on both tools', async () => {
-  const badSearch = await rpc({ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'search', arguments: { query: 'agent', retrieval: 'semantic' } } });
+  const badSearch = await rpc({ jsonrpc: '2.0', id: 22, method: 'tools/call', params: { name: 'search', arguments: { query: 'agent', retrieval: 'semantic' } } }, authed);
   const searchBody = await badSearch.json();
   assert.equal(searchBody.result.isError, true);
   assert.match(searchBody.result.content[0].text, /retrieval/);
 
-  const badPack = await rpc({ jsonrpc: '2.0', id: 23, method: 'tools/call', params: { name: 'get_context_pack', arguments: { retrieval: 'semantic' } } });
+  const badPack = await rpc({ jsonrpc: '2.0', id: 23, method: 'tools/call', params: { name: 'get_context_pack', arguments: { retrieval: 'semantic' } } }, authed);
   const packBody = await badPack.json();
   assert.equal(packBody.result.isError, true);
   assert.match(packBody.result.content[0].text, /retrieval/);
@@ -197,25 +195,22 @@ test('tools/call get_context_pack returns a valid pack and meters the quota', as
   assert.match(third.result.content[0].text, /quota/);
 });
 
-test('anonymous get_context_pack is not metered (demo corpus, IP-limited instead)', async () => {
-  for (let i = 0; i < 3; i++) {
-    const res = await rpc({ jsonrpc: '2.0', id: 10 + i, method: 'tools/call', params: { name: 'get_context_pack', arguments: { limit: 1 } } });
-    const body = await res.json();
-    assert.ok(!body.result.isError, `anonymous pull ${i + 1} works`);
-  }
+test('anonymous get_context_pack is 401 on MCP (REST demo corpus stays unmetered)', async () => {
+  const res = await rpc({ jsonrpc: '2.0', id: 10, method: 'tools/call', params: { name: 'get_context_pack', arguments: { limit: 1 } } });
+  assert.equal(res.status, 401);
 });
 
 test('malformed JSON-RPC and unknown methods return proper error objects', async () => {
-  const notRpc = await (await rpc({ hello: 'world' })).json();
+  const notRpc = await (await rpc({ hello: 'world' }, authed)).json();
   assert.equal(notRpc.error.code, -32600);
 
-  const unknownMethod = await (await rpc({ jsonrpc: '2.0', id: 6, method: 'resources/list' })).json();
+  const unknownMethod = await (await rpc({ jsonrpc: '2.0', id: 6, method: 'resources/list' }, authed)).json();
   assert.equal(unknownMethod.error.code, -32601);
 
-  const unknownTool = await (await rpc({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'drop_tables' } })).json();
+  const unknownTool = await (await rpc({ jsonrpc: '2.0', id: 7, method: 'tools/call', params: { name: 'drop_tables' } }, authed)).json();
   assert.equal(unknownTool.error.code, -32602);
 
-  const badArgs = await (await rpc({ jsonrpc: '2.0', id: 8, method: 'tools/call', params: { name: 'search', arguments: {} } })).json();
+  const badArgs = await (await rpc({ jsonrpc: '2.0', id: 8, method: 'tools/call', params: { name: 'search', arguments: {} } }, authed)).json();
   assert.equal(badArgs.result.isError, true);
 });
 
@@ -227,6 +222,7 @@ test('GET /mcp is 405 (stateless: no SSE stream)', async () => {
 test('invalid bearer on /mcp is rejected like REST', async () => {
   const res = await rpc({ jsonrpc: '2.0', id: 9, method: 'tools/list' }, { Authorization: 'Bearer not-a-key' });
   assert.equal(res.status, 401);
+  assert.match(res.headers.get('www-authenticate') || '', /resource_metadata=/);
 });
 
 test('upsert_document: read-only (cancelled) keys cannot write', async () => {

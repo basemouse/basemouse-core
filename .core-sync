@@ -2,4 +2,4 @@
 # Records the product-repo commit this snapshot was taken from.
 # scripts/check-core-staleness.sh reads this to compute drift; a missing or
 # unreadable marker is a hard failure, not a skip. Do not edit by hand.
-ff230721977b236b55cf4499f139bd9c2e41f492
+5f9e2c6468788dfeeb64ff95d3250c2b71894126
